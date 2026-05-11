@@ -1,0 +1,405 @@
+{
+  "accounts": [
+    {
+      "id": "acct_demo_owner",
+      "name": "Olivia Carter",
+      "email": "demo@teamflow.run",
+      "provider": "email",
+      "role": "owner",
+      "avatar": "OC",
+      "passwordHash": "$2b$10$AuqE3I/HlvbhJJ8sn0qgX.mRzLh4tZKH7lhXyjgj8fhbNgTBqfX9C",
+      "memberId": "mem_olivia",
+      "createdAt": "2026-03-22T00:57:28.135Z",
+      "updatedAt": "2026-05-05T00:57:28.135Z"
+    }
+  ],
+  "workspaces": [
+    {
+      "id": "ws_teamflow",
+      "name": "TeamFlow HQ",
+      "description": "Product, design, and engineering workspace",
+      "memberIds": [
+        "mem_olivia",
+        "mem_mason",
+        "mem_ava",
+        "mem_noah",
+        "mem_emma"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj_launchpad",
+      "name": "Launchpad",
+      "key": "LP",
+      "type": "kanban",
+      "workspaceId": "ws_teamflow",
+      "columns": [
+        {
+          "id": "todo",
+          "title": "Todo"
+        },
+        {
+          "id": "in_progress",
+          "title": "In Progress"
+        },
+        {
+          "id": "in_review",
+          "title": "In Review"
+        },
+        {
+          "id": "done",
+          "title": "Done"
+        }
+      ],
+      "memberIds": [
+        "mem_olivia",
+        "mem_mason",
+        "mem_ava"
+      ],
+      "description": "Customer-facing launch work"
+    },
+    {
+      "id": "proj_sprintcore",
+      "name": "SprintCore",
+      "key": "SC",
+      "type": "scrum",
+      "workspaceId": "ws_teamflow",
+      "columns": [
+        {
+          "id": "backlog",
+          "title": "Backlog"
+        },
+        {
+          "id": "todo",
+          "title": "Selected"
+        },
+        {
+          "id": "in_progress",
+          "title": "In Progress"
+        },
+        {
+          "id": "in_review",
+          "title": "Review"
+        },
+        {
+          "id": "done",
+          "title": "Done"
+        }
+      ],
+      "memberIds": [
+        "mem_mason",
+        "mem_ava",
+        "mem_noah"
+      ],
+      "description": "Scrum delivery for platform improvements"
+    }
+  ],
+  "sprints": [
+    {
+      "id": "sprint_alpha",
+      "name": "Sprint Alpha",
+      "projectId": "proj_sprintcore",
+      "startDate": "2026-05-02T00:57:28.135Z",
+      "endDate": "2026-05-16T00:57:28.135Z",
+      "status": "active",
+      "goal": "Stabilize task flows and release analytics improvements"
+    },
+    {
+      "id": "sprint_beta",
+      "name": "Sprint Beta",
+      "projectId": "proj_sprintcore",
+      "startDate": "2026-05-20T00:57:28.135Z",
+      "endDate": "2026-05-07T00:57:28.135Z",
+      "status": "planning",
+      "goal": "Polish collaboration tools"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task_LzS7-JdNRm",
+      "title": "Sint itaque magna qu",
+      "description": "Sunt sed sint earum",
+      "status": "done",
+      "priority": "low",
+      "assigneeId": "mem_noah",
+      "labels": [
+        "Rerum sed pariatur"
+      ],
+      "comments": [],
+      "projectId": "proj_launchpad",
+      "sprintId": null,
+      "codeSnippets": [
+        {
+          "id": "ed2e5eea-f9c1-457f-b46c-282efcc1e99c",
+          "language": "Voluptatem aut enim",
+          "code": "Sapiente est fuga O",
+          "filename": "Sed labore incididun"
+        }
+      ],
+      "devNotes": "Consequatur Veniam",
+      "createdAt": "2026-05-06T01:12:41.405Z",
+      "updatedAt": "2026-05-06T01:12:41.405Z"
+    },
+    {
+      "id": "task_i_53qF8jN_",
+      "title": "Dolorum enim esse pe",
+      "description": "Ut voluptatibus eu v",
+      "status": "todo",
+      "priority": "medium",
+      "assigneeId": "mem_mason",
+      "labels": [
+        "Esse ut molestiae d"
+      ],
+      "comments": [],
+      "projectId": "proj_launchpad",
+      "sprintId": "sprint_alpha",
+      "codeSnippets": [
+        {
+          "id": "ea58b081-e30a-4536-9439-42c629ee3a2a",
+          "language": "Similique et commodo",
+          "code": "Dolores optio verit",
+          "filename": "Architecto soluta iu"
+        }
+      ],
+      "devNotes": "Quis eius consequat",
+      "createdAt": "2026-05-06T01:03:38.610Z",
+      "updatedAt": "2026-05-06T01:03:38.610Z"
+    },
+    {
+      "id": "task_board",
+      "title": "Refine kanban swimlanes",
+      "description": "Improve visual separation and drag feedback on the board.",
+      "status": "in_progress",
+      "priority": "high",
+      "assigneeId": "mem_mason",
+      "labels": [
+        "ui",
+        "board"
+      ],
+      "comments": [
+        {
+          "id": "comment_1",
+          "content": "Need a stronger drop highlight for mobile drag gestures.",
+          "authorId": "mem_olivia",
+          "createdAt": "2026-05-04T00:57:28.135Z"
+        }
+      ],
+      "projectId": "proj_launchpad",
+      "sprintId": null,
+      "codeSnippets": [
+        {
+          "id": "snippet_1",
+          "language": "tsx",
+          "code": "const columns = tasksByStatus.map(status => ({ status, tasks: tasks.filter(task => task.status === status) }));",
+          "filename": "kanban-board.tsx"
+        }
+      ],
+      "devNotes": "Keep animations subtle and make the drop target obvious.",
+      "createdAt": "2026-04-30T00:57:28.135Z",
+      "updatedAt": "2026-05-05T00:57:28.135Z"
+    },
+    {
+      "id": "task_docs",
+      "title": "Draft product release notes",
+      "description": "Write markdown release notes for the current sprint.",
+      "status": "todo",
+      "priority": "medium",
+      "assigneeId": "mem_ava",
+      "labels": [
+        "docs",
+        "launch"
+      ],
+      "comments": [],
+      "projectId": "proj_launchpad",
+      "sprintId": null,
+      "codeSnippets": [],
+      "devNotes": "",
+      "createdAt": "2026-05-03T00:57:28.135Z",
+      "updatedAt": "2026-05-03T00:57:28.135Z"
+    },
+    {
+      "id": "task_chat",
+      "title": "Group chat quick reactions",
+      "description": "Support fast emoji reactions and better message grouping.",
+      "status": "backlog",
+      "priority": "low",
+      "assigneeId": "mem_noah",
+      "labels": [
+        "chat",
+        "ux"
+      ],
+      "comments": [],
+      "projectId": "proj_sprintcore",
+      "sprintId": "sprint_alpha",
+      "codeSnippets": [],
+      "devNotes": "Can piggyback on the message list before the backend exists.",
+      "createdAt": "2026-05-01T00:57:28.135Z",
+      "updatedAt": "2026-05-01T00:57:28.135Z"
+    },
+    {
+      "id": "task_metrics",
+      "title": "Burndown chart calibration",
+      "description": "Tune the analytics data to show realistic sprint progress.",
+      "status": "in_review",
+      "priority": "urgent",
+      "assigneeId": "mem_olivia",
+      "labels": [
+        "analytics"
+      ],
+      "comments": [],
+      "projectId": "proj_sprintcore",
+      "sprintId": "sprint_alpha",
+      "codeSnippets": [],
+      "devNotes": "Validate zero-task and completed-sprint cases.",
+      "createdAt": "2026-04-28T00:57:28.135Z",
+      "updatedAt": "2026-05-05T00:57:28.135Z"
+    },
+    {
+      "id": "task_done",
+      "title": "Theme switch persistence",
+      "description": "Remember dark/light preference between sessions.",
+      "status": "done",
+      "priority": "medium",
+      "assigneeId": "mem_ava",
+      "labels": [
+        "theme",
+        "settings"
+      ],
+      "comments": [],
+      "projectId": "proj_sprintcore",
+      "sprintId": "sprint_alpha",
+      "codeSnippets": [],
+      "devNotes": "ThemeProvider wraps the whole app layout.",
+      "createdAt": "2026-04-26T00:57:28.135Z",
+      "updatedAt": "2026-05-05T00:57:28.135Z"
+    },
+    {
+      "id": "task_backlog",
+      "title": "Admin panel settings shell",
+      "description": "Add a permissions-aware admin settings page.",
+      "status": "backlog",
+      "priority": "high",
+      "assigneeId": null,
+      "labels": [
+        "rbac",
+        "admin"
+      ],
+      "comments": [],
+      "projectId": "proj_sprintcore",
+      "sprintId": null,
+      "codeSnippets": [],
+      "devNotes": "Use ROLE_PERMISSIONS to gate sections.",
+      "createdAt": "2026-05-04T00:57:28.135Z",
+      "updatedAt": "2026-05-04T00:57:28.135Z"
+    }
+  ],
+  "members": [
+    {
+      "id": "mem_olivia",
+      "name": "Olivia Carter",
+      "email": "olivia@teamflow.run",
+      "avatar": "OC",
+      "role": "owner",
+      "status": "online",
+      "joinedAt": "2026-03-25T00:57:28.135Z"
+    },
+    {
+      "id": "mem_mason",
+      "name": "Mason Lee",
+      "email": "mason@teamflow.run",
+      "avatar": "ML",
+      "role": "admin",
+      "status": "online",
+      "joinedAt": "2026-04-18T00:57:28.135Z"
+    },
+    {
+      "id": "mem_ava",
+      "name": "Ava Patel",
+      "email": "ava@teamflow.run",
+      "avatar": "AP",
+      "role": "manager",
+      "status": "away",
+      "joinedAt": "2026-04-09T00:57:28.135Z"
+    },
+    {
+      "id": "mem_noah",
+      "name": "Noah Kim",
+      "email": "noah@teamflow.run",
+      "avatar": "NK",
+      "role": "developer",
+      "status": "offline",
+      "joinedAt": "2026-04-27T00:57:28.135Z"
+    },
+    {
+      "id": "mem_emma",
+      "name": "Emma Stone",
+      "email": "emma@teamflow.run",
+      "avatar": "ES",
+      "role": "viewer",
+      "status": "online",
+      "joinedAt": "2026-05-01T00:57:28.135Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg_5-6bsnMh4x",
+      "content": "Testing backend persistence! 🚀",
+      "senderId": "mem_olivia",
+      "channelId": "channel_launchpad",
+      "createdAt": "2026-05-06T01:03:27.600Z"
+    },
+    {
+      "id": "msg_1",
+      "content": "Launchpad board looks good. I want a stronger hover state for drop zones.",
+      "senderId": "mem_mason",
+      "channelId": "channel_launchpad",
+      "createdAt": "2026-05-05T00:57:28.135Z"
+    },
+    {
+      "id": "msg_2",
+      "content": "I will tighten the analytics copy after the sprint demo.",
+      "senderId": "mem_ava",
+      "channelId": "channel_team",
+      "createdAt": "2026-05-05T00:57:28.135Z"
+    }
+  ],
+  "documents": [
+    {
+      "id": "doc_release",
+      "title": "Sprint Alpha Release Notes",
+      "content": "# Sprint Alpha\n\n- Kanban board refinements\n- Chat shell updates\n- Analytics calibration\n\n## Notes\n\nUse this doc for the demo summary.",
+      "projectId": "proj_sprintcore",
+      "linkedTaskIds": [
+        "task_metrics",
+        "task_chat"
+      ],
+      "authorId": "mem_olivia",
+      "updatedAt": "2026-05-05T00:57:28.135Z"
+    }
+  ],
+  "channels": [
+    {
+      "id": "channel_team",
+      "name": "Team HQ",
+      "type": "workspace",
+      "relatedId": "ws_teamflow"
+    },
+    {
+      "id": "channel_launchpad",
+      "name": "#launchpad",
+      "type": "project",
+      "relatedId": "proj_launchpad"
+    },
+    {
+      "id": "channel_sprintcore",
+      "name": "#sprintcore",
+      "type": "project",
+      "relatedId": "proj_sprintcore"
+    }
+  ],
+  "activeWorkspaceId": "ws_teamflow",
+  "activeProjectId": "proj_launchpad",
+  "activeSprintId": "sprint_alpha",
+  "activeView": "board"
+}
