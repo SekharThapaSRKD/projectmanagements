@@ -6,8 +6,6 @@ import {
   Users, 
   SendHorizontal, 
   MoreVertical, 
-  Phone, 
-  Video, 
   Info,
   Search,
   Plus,
@@ -19,7 +17,11 @@ import {
   Play,
   Pause,
   Clock,
-  Trash2
+  Trash2,
+  Paperclip,
+  X,
+  Download,
+  File
 } from 'lucide-react';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { useAppStore } from '@/lib/store';
@@ -31,7 +33,9 @@ export function ChatPanel() {
   const { channels, messages, members, activeWorkspaceId, activeProjectId, activeChannelId, sendMessage, setActiveChannel, hydrateMessages } = useAppStore();
   const currentUser = useAuthStore(state => state.user);
   const [messageText, setMessageText] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Voice Recording State
   const [isRecording, setIsRecording] = useState(false);
@@ -69,9 +73,38 @@ export function ChatPanel() {
   }, [threadMessages]);
 
   const handleSend = () => {
-    if (!messageText.trim() || !currentChannel) return;
-    sendMessage(messageText.trim(), currentChannel.id);
+    if ((!messageText.trim() && attachments.length === 0) || !currentChannel) return;
+    
+    // Convert files to attachment metadata
+    const attachmentMetadata = attachments.map(file => ({
+      id: `att_${Math.random().toString(36).slice(2)}`,
+      name: file.name,
+      url: URL.createObjectURL(file), // In production, upload to cloud storage
+      size: file.size,
+      type: file.type
+    }));
+    
+    // For now, we'll send the message with attachments
+    // In production, you'd upload files to cloud storage and get real URLs
+    sendMessage(
+      messageText.trim() || `📎 Shared ${attachments.length} file(s)`,
+      currentChannel.id,
+      undefined,
+      undefined,
+      undefined,
+      attachmentMetadata
+    );
+    
     setMessageText('');
+    setAttachments([]);
+  };
+  
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   };
 
   const startRecording = async () => {
@@ -277,15 +310,8 @@ export function ChatPanel() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <button className="flex h-10 w-10 items-center justify-center rounded-xl text-[hsl(var(--muted))] hover:bg-[hsl(var(--bg-soft))] hover:text-[hsl(var(--accent))] transition-all">
-              <Phone className="h-4 w-4" />
-            </button>
-            <button className="flex h-10 w-10 items-center justify-center rounded-xl text-[hsl(var(--muted))] hover:bg-[hsl(var(--bg-soft))] hover:text-[hsl(var(--accent))] transition-all">
-              <Video className="h-4 w-4" />
-            </button>
-            <div className="h-4 w-[1px] bg-[hsl(var(--border-soft))] mx-2" />
-            <button className="flex h-10 w-10 items-center justify-center rounded-xl text-[hsl(var(--muted))] hover:bg-[hsl(var(--bg-soft))] hover:text-[hsl(var(--text))] transition-all">
+          <div className="flex items-center gap-2">
+            <button className="flex h-10 w-10 items-center justify-center rounded-xl text-[hsl(var(--muted))] hover:bg-[hsl(var(--bg-soft))] hover:text-[hsl(var(--text))] transition-all" title="Channel options">
               <MoreVertical className="h-4 w-4" />
             </button>
           </div>
@@ -345,13 +371,41 @@ export function ChatPanel() {
                       </div>
                     </div>
                   ) : (
-                    <div className={cn(
-                      "rounded-[24px] px-5 py-3 text-sm leading-relaxed shadow-sm transition-all",
-                      isMe 
-                        ? "bg-[hsl(var(--accent))] text-black font-medium rounded-tr-none" 
-                        : "bg-[hsl(var(--bg-panel))] border border-[hsl(var(--border-soft))] text-[hsl(var(--text))] rounded-tl-none"
-                    )}>
-                      {msg.content}
+                    <div className="space-y-2">
+                      {msg.content && (
+                        <div className={cn(
+                          "rounded-[24px] px-5 py-3 text-sm leading-relaxed shadow-sm transition-all",
+                          isMe 
+                            ? "bg-[hsl(var(--accent))] text-black font-medium rounded-tr-none" 
+                            : "bg-[hsl(var(--bg-panel))] border border-[hsl(var(--border-soft))] text-[hsl(var(--text))] rounded-tl-none"
+                        )}>
+                          {msg.content}
+                        </div>
+                      )}
+                      {msg.attachments && msg.attachments.length > 0 && (
+                        <div className="space-y-2">
+                          {msg.attachments.map((att) => (
+                            <a
+                              key={att.id}
+                              href={att.url}
+                              download={att.name}
+                              className={cn(
+                                "flex items-center gap-3 rounded-[16px] px-4 py-3 text-sm transition-all hover:scale-105 active:scale-95",
+                                isMe 
+                                  ? "bg-white/10 text-white" 
+                                  : "bg-[hsl(var(--bg-soft))] border border-[hsl(var(--border))] text-[hsl(var(--text))] hover:bg-[hsl(var(--bg-panel))]"
+                              )}
+                            >
+                              <File className="h-5 w-5 flex-shrink-0 text-[hsl(var(--accent))]" />
+                              <div className="flex-1 min-w-0">
+                                <p className="truncate font-medium">{att.name}</p>
+                                <p className="text-[10px] text-[hsl(var(--muted))]">{formatFileSize(att.size)}</p>
+                              </div>
+                              <Download className="h-4 w-4 flex-shrink-0 opacity-60 group-hover:opacity-100" />
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -368,15 +422,47 @@ export function ChatPanel() {
           )}
         </div>
 
-        <div className="p-8 pt-0 sticky bottom-0 bg-transparent">
+        <div className="p-8 pt-0 sticky bottom-0 bg-gradient-to-t from-[hsl(var(--bg-elevated))] to-transparent">
+          {/* Attachments Preview */}
+          {attachments.length > 0 && (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {attachments.map((file, idx) => (
+                <div key={idx} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--bg-soft))] px-3 py-2 text-xs">
+                  <File className="h-4 w-4 text-[hsl(var(--accent))]" />
+                  <span className="truncate max-w-[200px] text-[hsl(var(--text))]">{file.name}</span>
+                  <button
+                    onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
+                    className="hover:text-[hsl(var(--accent))]"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="relative flex items-center gap-3">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={(e) => {
+                if (e.target.files) {
+                  setAttachments([...attachments, ...Array.from(e.target.files)]);
+                  e.target.value = '';
+                }
+              }}
+              multiple
+              className="hidden"
+              accept="*/*"
+            />
+            
             <div className="relative flex-1">
               <input
                 value={messageText}
                 onChange={e => setMessageText(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSend()}
                 disabled={isRecording}
-                placeholder={isRecording ? "Recording voice..." : "Type your message or record voice..."}
+                placeholder={isRecording ? "Recording voice..." : "Type your message..."}
                 className={cn(
                   "w-full rounded-[24px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-soft))] px-6 py-4 text-sm text-[hsl(var(--text))] outline-none transition-all focus:border-[hsl(var(--accent)/0.5)] focus:ring-4 focus:ring-[hsl(var(--accent)/0.05)]",
                   isRecording && "border-[hsl(var(--accent))] pl-14"
@@ -395,12 +481,14 @@ export function ChatPanel() {
                 <button
                   onClick={cancelRecording}
                   className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[hsl(var(--muted))] transition hover:bg-white/10 hover:text-white"
+                  title="Cancel recording"
                 >
                   <Trash2 className="h-5 w-5" />
                 </button>
                 <button
                   onClick={stopRecording}
                   className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500 text-white shadow-lg shadow-red-500/20 transition hover:scale-105 active:scale-95"
+                  title="Stop recording and send"
                 >
                   <Square className="h-5 w-5 fill-current" />
                 </button>
@@ -408,16 +496,24 @@ export function ChatPanel() {
             ) : (
               <div className="flex items-center gap-2">
                 <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[hsl(var(--muted))] transition hover:bg-white/10 hover:text-[hsl(var(--accent))]"
+                  title="Attach files (videos, images, documents)"
+                >
+                  <Paperclip className="h-5 w-5" />
+                </button>
+                <button
                   onClick={startRecording}
                   className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[hsl(var(--muted))] transition hover:bg-white/10 hover:text-[hsl(var(--accent))]"
-                  title="Record Voice Message"
+                  title="Record voice message"
                 >
                   <Mic className="h-5 w-5" />
                 </button>
                 <button
                   onClick={handleSend}
-                  disabled={!messageText.trim()}
+                  disabled={!messageText.trim() && attachments.length === 0}
                   className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[hsl(var(--accent))] text-black shadow-lg shadow-[hsl(var(--accent)/0.2)] transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                  title="Send message"
                 >
                   <SendHorizontal className="h-5 w-5" />
                 </button>

@@ -146,7 +146,7 @@ interface AppState extends SeedData {
   completeSprint: (sprintId: string) => void;
   addTaskToSprint: (taskId: string, sprintId: string) => void;
   removeTaskFromSprint: (taskId: string) => void;
-  sendMessage: (content: string, channelId?: string, senderId?: string, voiceUrl?: string, duration?: number) => void;
+  sendMessage: (content: string, channelId?: string, senderId?: string, voiceUrl?: string, duration?: number, attachments?: Array<{ id: string; name: string; url: string; size: number; type: string }>) => void;
   addMeeting: (input: NewMeetingInput) => string;
   updateMeeting: (meetingId: string, patch: Partial<Meeting>) => void;
   deleteMeeting: (meetingId: string) => void;
@@ -608,15 +608,17 @@ export const useAppStore = create<AppState>()(
             tasks: state.tasks.map(current => (current.id === taskId ? { ...current, sprintId: null, updatedAt: new Date().toISOString() } : current))
           };
         }),
-      sendMessage: (content, channelId = get().activeChannelId, senderId = 'mem_olivia', voiceUrl, duration) =>
+      sendMessage: (content, channelId = get().activeChannelId, senderId = 'mem_olivia', voiceUrl, duration, attachments) =>
         set(state => {
-          const message = {
+          const message: Message = {
             id: makeId('msg'),
             content,
             senderId,
             channelId,
-            createdAt: new Date().toISOString()
-          } satisfies Message;
+            createdAt: new Date().toISOString(),
+            ...(voiceUrl && { voiceUrl, duration }),
+            ...(attachments && attachments.length > 0 && { attachments })
+          };
           void syncIfReal(() => sendTeamFlowMessage(content, channelId, senderId));
 
           return {

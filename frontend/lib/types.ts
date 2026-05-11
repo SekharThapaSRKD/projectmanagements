@@ -191,6 +191,13 @@ export interface Message {
   createdAt: string;
   voiceUrl?: string;
   duration?: number;
+  attachments?: {
+    id: string;
+    name: string;
+    url: string;
+    size: number;
+    type: string;
+  }[];
 }
 
 export interface Meeting {

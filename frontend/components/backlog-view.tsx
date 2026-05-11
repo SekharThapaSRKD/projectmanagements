@@ -1,10 +1,11 @@
 'use client';
 
-import { ArrowRight, Plus, LayoutGrid, CheckCircle2, Circle, Clock, Flame, Calendar, Info } from 'lucide-react';
-import { useMemo } from 'react';
+import { LayoutGrid } from 'lucide-react';
+import { useMemo, useCallback, useState } from 'react';
 import { useAppStore } from '@/lib/store';
 import type { Task } from '@/lib/types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { JiraStyleBacklog } from './jira-style-backlog';
+import { TaskDialog } from './task-dialog';
 
 type BacklogViewProps = {
   onTaskClick: (task: Task) => void;
@@ -12,169 +13,199 @@ type BacklogViewProps = {
 };
 
 export function BacklogView({ onTaskClick, onNewTask }: BacklogViewProps) {
-  const { tasks, activeProjectId, activeSprintId, sprints, addTaskToSprint, removeTaskFromSprint } = useAppStore();
+  const [showTaskDialog, setShowTaskDialog] = useState(false);
+  const [taskDialogSprintId, setTaskDialogSprintId] = useState<string | null>(null);
 
-  const projectTasks = useMemo(() => tasks.filter(task => task.projectId === activeProjectId), [activeProjectId, tasks]);
-  const backlogTasks = useMemo(() => projectTasks.filter(task => !task.sprintId), [projectTasks]);
-  const sprintTasks = useMemo(() => projectTasks.filter(task => task.sprintId), [projectTasks]);
-  const activeSprint = sprints.find(sprint => sprint.id === activeSprintId) ?? sprints.find(sprint => sprint.projectId === activeProjectId) ?? null;
+  const { 
+    tasks, 
+    activeProjectId, 
+    sprints, 
+    members, 
+    updateTask, 
+    addTask,
+    deleteTask,
+    addSprint,
+    startSprint,
+    completeSprint,
+    setActiveSprint
+  } = useAppStore();
 
+  // Filter tasks and sprints for current project
+  const projectTasks = useMemo(
+    () => tasks.filter(task => task.projectId === activeProjectId),
+    [activeProjectId, tasks]
+  );
+
+  const projectSprints = useMemo(
+    () => sprints.filter(sprint => sprint.projectId === activeProjectId),
+    [sprints, activeProjectId]
+  );
+
+  // Show empty state when no project selected
   if (!activeProjectId) {
     return (
-      <div className="flex h-[400px] flex-col items-center justify-center rounded-[32px] border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))/0.3] p-8 text-center">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-[24px] bg-[hsl(var(--bg-soft))] text-[hsl(var(--muted))]">
+      <div className="flex h-[400px] flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
           <LayoutGrid className="h-8 w-8 opacity-40" />
         </div>
-        <h3 className="text-xl font-bold text-[hsl(var(--text))]">No Project Selected</h3>
-        <p className="mt-2 max-w-xs text-[hsl(var(--muted))]">
-          Select a project from the sidebar or dashboard to view the backlog and manage sprints.
+        <h3 className="text-xl font-bold text-gray-900">No Project Selected</h3>
+        <p className="mt-2 max-w-xs text-gray-600">
+          Select a project from the sidebar to view the backlog and manage sprints.
         </p>
       </div>
     );
   }
 
-  const renderPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return <Flame className="h-3 w-3 text-rose-500" />;
-      case 'high': return <Flame className="h-3 w-3 text-orange-500" />;
-      case 'medium': return <Clock className="h-3 w-3 text-amber-500" />;
-      default: return <Circle className="h-3 w-3 text-[hsl(var(--muted))]" />;
+  // Map tasks to sprints
+  const getTasksForSprint = useCallback(
+    (sprintId: string | null) => 
+      projectTasks.filter(t => t.sprintId === sprintId),
+    [projectTasks]
+  );
+
+  // Calculate sprint status based on tasks
+  const getSprintStatus = useCallback((sprintId: string) => {
+    // Use the actual sprint status from store if available
+    const sprint = projectSprints.find(s => s.id === sprintId);
+    if (sprint && sprint.status) {
+      return sprint.status as 'planning' | 'active' | 'completed';
     }
-  };
+    
+    // Fallback to task-based calculation
+    const sprintTasks = getTasksForSprint(sprintId);
+    if (sprintTasks.length === 0) return 'planning' as const;
+    
+    const completedCount = sprintTasks.filter(t => t.status === 'done').length;
+    if (completedCount === sprintTasks.length) return 'completed' as const;
+    if (completedCount > 0 || sprintTasks.some(t => t.status === 'in_progress')) 
+      return 'active' as const;
+    
+    return 'planning' as const;
+  }, [getTasksForSprint, projectSprints]);
+
+  // Get tasks visible on board (backlog + active sprint tasks only)
+  const getBoardVisibleTasks = useCallback(() => {
+    return projectTasks.filter(task => {
+      // Backlog items always visible on board (future work)
+      if (!task.sprintId) return true;
+      
+      // For sprint tasks, only show if sprint is active
+      const sprint = projectSprints.find(s => s.id === task.sprintId);
+      return sprint && getSprintStatus(sprint.id) === 'active';
+    });
+  }, [projectTasks, projectSprints, getSprintStatus]);
+
+  // Handle moving task between sprints
+  const handleTaskMove = useCallback((taskId: string, toSprintId: string | null) => {
+    updateTask(taskId, { sprintId: toSprintId });
+  }, [updateTask]);
+
+  // Handle task deletion
+  const handleTaskDelete = useCallback((taskId: string) => {
+    deleteTask(taskId);
+  }, [deleteTask]);
+
+  // Handle task status change (checkbox toggle)
+  const handleTaskStatusChange = useCallback((taskId: string, status: string) => {
+    updateTask(taskId, { status });
+  }, [updateTask]);
+
+  // Handle creating new task - open task dialog
+  const handleCreateTask = useCallback((sprintId: string | null) => {
+    setActiveSprint(sprintId);
+    setTaskDialogSprintId(sprintId);
+    setShowTaskDialog(true);
+  }, [setActiveSprint]);
+
+  // Handle sprint actions (start, complete, delete)
+  const handleSprintAction = useCallback((sprintId: string, action: string) => {
+    const sprint = projectSprints.find(s => s.id === sprintId);
+    if (!sprint) return;
+
+    switch (action) {
+      case 'start':
+        startSprint(sprintId);
+        break;
+      case 'complete':
+        completeSprint(sprintId);
+        break;
+      case 'delete':
+        console.log(`Deleting sprint: ${sprint.name}`);
+        // TODO: Call backend to delete sprint
+        break;
+    }
+  }, [projectSprints, startSprint, completeSprint]);
+
+  // Handle creating new sprint
+  const handleCreateSprint = useCallback((sprintName: string, startDate?: string, endDate?: string) => {
+    // Generate default dates if not provided
+    const today = new Date();
+    const defaultStart = startDate || today.toISOString().split('T')[0];
+    
+    // Default end date is 2 weeks from start
+    const startDateObj = new Date(defaultStart);
+    const defaultEnd = endDate || new Date(startDateObj.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    addSprint({
+      name: sprintName,
+      projectId: activeProjectId,
+      startDate: defaultStart,
+      endDate: defaultEnd,
+      goal: '',
+    });
+  }, [activeProjectId, addSprint]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 rounded-[32px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] p-8 shadow-sm">
-        <div className="flex items-center gap-5">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[hsl(var(--accent)/0.1)] text-[hsl(var(--accent))] shadow-inner">
-            <LayoutGrid className="h-7 w-7" />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--muted))]">Scrum Process</p>
-            <h1 className="text-3xl font-bold text-[hsl(var(--text))]">Product Backlog</h1>
-          </div>
-        </div>
-        <button type="button" onClick={onNewTask} className="inline-flex items-center gap-2 rounded-2xl bg-[hsl(var(--accent))] px-5 py-2.5 text-sm font-bold text-black transition-all hover:opacity-90 hover:scale-105 active:scale-95 shadow-lg shadow-[hsl(var(--accent)/0.2)]">
-          <Plus className="h-4 w-4" /> New Task
-        </button>
-      </div>
-
-      {!activeSprint && (
-        <div className="flex items-center gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-500">
-          <Info className="h-5 w-5 shrink-0" />
-          <p className="text-sm font-medium">No active sprint selected. Head over to the Sprints tab to create or focus on a sprint to start planning.</p>
-        </div>
+    <div className="space-y-4">
+      <JiraStyleBacklog
+        tasks={projectTasks}
+        sprints={projectSprints.map(sprint => ({
+          id: sprint.id,
+          name: sprint.name,
+          status: getSprintStatus(sprint.id),
+          startDate: sprint.startDate,
+          endDate: sprint.endDate,
+        }))}
+        members={members}
+        onTaskMove={handleTaskMove}
+        onTaskDelete={handleTaskDelete}
+        onTaskClick={onTaskClick}
+        onTaskStatusChange={handleTaskStatusChange}
+        onCreateTask={handleCreateTask}
+        onCreateSprint={handleCreateSprint}
+        onSprintAction={handleSprintAction}
+      />
+      {showTaskDialog && (
+        <TaskDialog
+          task={null}
+          isNew={true}
+          onClose={() => setShowTaskDialog(false)}
+        />
       )}
-
-      <div className="grid gap-6 xl:grid-cols-2">
-        {/* Active/Selected Sprint Column */}
-        <section className="flex flex-col rounded-[32px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] p-6 shadow-sm">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(var(--bg-soft))]">
-                <Calendar className="h-5 w-5 text-[hsl(var(--accent))]" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-[hsl(var(--text))]">{activeSprint ? activeSprint.name : 'Current Sprint'}</h2>
-                <p className="text-xs text-[hsl(var(--muted))]">{sprintTasks.length} planned items</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 space-y-3 overflow-y-auto pr-2">
-            <AnimatePresence>
-              {sprintTasks.length > 0 ? sprintTasks.map(task => (
-                <motion.article 
-                  key={task.id} 
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="group rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))] p-4 transition-all hover:border-[hsl(var(--accent)/0.5)] hover:shadow-md"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        {task.status === 'done' ? (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                        ) : (
-                          <Circle className="h-4 w-4 text-[hsl(var(--muted))]" />
-                        )}
-                        <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted))]">{task.id.slice(0, 8)}</span>
-                      </div>
-                      <button type="button" onClick={() => onTaskClick(task)} className="text-left text-sm font-bold text-[hsl(var(--text))] hover:text-[hsl(var(--accent))] transition-colors">{task.title}</button>
-                      {task.description && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[hsl(var(--muted))]">{task.description}</p>}
-                      <div className="mt-3 flex items-center gap-3">
-                        <span className="flex items-center gap-1 rounded-full bg-[hsl(var(--bg-panel))] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted))]">
-                          {renderPriorityIcon(task.priority)} {task.priority}
-                        </span>
-                        <span className="rounded-full bg-[hsl(var(--bg-panel))] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted))]">{task.status.replace('_', ' ')}</span>
-                      </div>
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={() => removeTaskFromSprint(task.id)} 
-                      className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-[hsl(var(--bg-panel))] px-3 py-1.5 text-xs font-semibold text-[hsl(var(--text))] opacity-0 transition-all group-hover:opacity-100 hover:bg-[hsl(var(--danger)/0.1)] hover:text-[hsl(var(--danger))] border border-[hsl(var(--border))]"
-                      title="Move to Backlog"
-                    >
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </motion.article>
-              )) : (
-                <div className="flex h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))/0.5] text-[hsl(var(--muted))]">
-                  <LayoutGrid className="mb-2 h-8 w-8 opacity-20" />
-                  <p className="text-sm font-medium">No tasks assigned to sprint yet.</p>
-                </div>
-              )}
-            </AnimatePresence>
-          </div>
-        </section>
-
-        {/* Backlog Column */}
-        <section className="flex flex-col rounded-[32px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] p-6 shadow-sm">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-[hsl(var(--text))]">Product Backlog</h2>
-            <span className="rounded-full bg-[hsl(var(--bg-soft))] px-3 py-1 text-xs font-bold uppercase tracking-widest text-[hsl(var(--muted))]">{backlogTasks.length} items</span>
-          </div>
-          
-          <div className="flex-1 space-y-3 overflow-y-auto pr-2">
-            <AnimatePresence>
-              {backlogTasks.length > 0 ? backlogTasks.map(task => (
-                <motion.article 
-                  key={task.id} 
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="group rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))] p-4 transition-all hover:border-[hsl(var(--accent)/0.5)] hover:shadow-md"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted))]">{task.id.slice(0, 8)}</span>
-                      </div>
-                      <button type="button" onClick={() => onTaskClick(task)} className="text-left text-sm font-bold text-[hsl(var(--text))] hover:text-[hsl(var(--accent))] transition-colors">{task.title}</button>
-                      {task.description && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[hsl(var(--muted))]">{task.description}</p>}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => activeSprint && addTaskToSprint(task.id, activeSprint.id)}
-                      disabled={!activeSprint}
-                      className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[hsl(var(--accent)/0.1)] px-3 py-1.5 text-xs font-bold text-[hsl(var(--accent))] transition hover:bg-[hsl(var(--accent)/0.2)] disabled:cursor-not-allowed disabled:opacity-40 border border-[hsl(var(--accent)/0.2)]"
-                      title="Add to active sprint"
-                    >
-                      <Plus className="h-3.5 w-3.5" /> Sprint
-                    </button>
-                  </div>
-                </motion.article>
-              )) : (
-                <div className="flex h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))/0.5] text-[hsl(var(--muted))]">
-                  <p className="text-sm font-medium">Backlog is empty. Add a task to start planning.</p>
-                </div>
-              )}
-            </AnimatePresence>
-          </div>
-        </section>
-      </div>
     </div>
   );
+}
+
+/**
+ * Utility to determine if a task should be visible on the board
+ * - Backlog tasks (no sprint): Always visible (future work)
+ * - Planning sprint tasks: NOT visible (not started yet)
+ * - Active sprint tasks: Visible on board
+ * - Completed sprint tasks: Visible but marked as completed
+ */
+export function shouldTaskBeVisibleOnBoard(
+  task: Task | null,
+  sprints: any[]
+): boolean {
+  if (!task) return false;
+  
+  // Backlog items always visible
+  if (!task.sprintId) return true;
+  
+  // Check sprint status
+  const sprint = sprints.find(s => s.id === task.sprintId);
+  if (!sprint) return true; // If sprint not found, show task (fallback)
+  
+  // Only show tasks from active or completed sprints
+  return sprint.status === 'active' || sprint.status === 'completed';
 }

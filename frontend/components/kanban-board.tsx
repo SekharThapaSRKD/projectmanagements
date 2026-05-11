@@ -194,7 +194,7 @@ function DroppableColumn({ columnId, title, tasks, onTaskClick, onCreateTask }: 
 }
 
 export function KanbanBoard({ onTaskClick, filterSprintId = null, onCreateTask }: KanbanBoardProps) {
-  const { tasks, activeProjectId, moveTask, projects, updateProject } = useAppStore();
+  const { tasks, activeProjectId, sprints, moveTask, projects, updateProject } = useAppStore();
   const project = projects.find(item => item.id === activeProjectId);
   const [isCustomColumnsDialogOpen, setIsCustomColumnsDialogOpen] = useState(false);
 
@@ -217,12 +217,25 @@ export function KanbanBoard({ onTaskClick, filterSprintId = null, onCreateTask }
       }
       
       if (project?.type === 'scrum') {
-        return task.sprintId != null;
+        // For scrum projects: only show backlog + active sprint tasks
+        // Hide tasks from planning sprints (they're not on the board yet)
+        if (!task.sprintId) {
+          // Backlog task - always visible
+          return true;
+        }
+        
+        // Check sprint status - only show active sprints
+        const sprint = sprints.find(s => s.id === task.sprintId);
+        if (!sprint) return true; // If sprint not found, show task (fallback)
+        
+        // Only show tasks from active or completed sprints
+        // Hide tasks from planning sprints
+        return sprint.status === 'active' || sprint.status === 'completed';
       }
       
       return true;
     });
-  }, [activeProjectId, filterSprintId, tasks, project?.type]);
+  }, [activeProjectId, filterSprintId, tasks, project?.type, sprints]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -304,9 +317,6 @@ export function KanbanBoard({ onTaskClick, filterSprintId = null, onCreateTask }
           >
             <Settings className="h-4 w-4" />
             Customize Columns
-          </button>
-          <button type="button" onClick={onCreateTask} className="rounded-2xl bg-[hsl(var(--accent))] px-8 py-3.5 text-sm font-bold text-black transition-all hover:opacity-90 hover:scale-105 active:scale-95 shadow-lg shadow-[hsl(var(--accent)/0.2)]">
-            Create Task
           </button>
         </div>
       </div>

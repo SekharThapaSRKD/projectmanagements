@@ -103,6 +103,15 @@ export interface Message {
   senderId: string;
   channelId: string;
   createdAt: string;
+  voiceUrl?: string;
+  duration?: number;
+  attachments?: {
+    id: string;
+    name: string;
+    url: string;
+    size: number;
+    type: string;
+  }[];
 }
 
 export interface Channel {

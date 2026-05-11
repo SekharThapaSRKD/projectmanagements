@@ -27,7 +27,6 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
     { view: 'dashboard', label: t('common.dashboard'), icon: Home },
     { view: 'board', label: t('common.projects'), icon: SquareKanban },
     { view: 'backlog', label: 'Backlog', icon: LayoutGrid },
-    { view: 'sprints', label: 'Sprints', icon: PanelLeft },
     { view: 'meetings', label: 'Meetings', icon: CalendarDays },
     { view: 'chat', label: 'Chat', icon: MessageSquareText },
     { view: 'analytics', label: 'Analytics', icon: LayoutGrid },
