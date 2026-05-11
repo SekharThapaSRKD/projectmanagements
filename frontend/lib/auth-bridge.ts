@@ -43,6 +43,10 @@ export const parseAuthUser = (input: unknown, fallbackProvider: AuthUser['provid
   const emailRaw = typeof candidate.email === 'string' ? candidate.email : `${fallbackProvider}-user@teamflow.run`;
   const providerRaw = typeof candidate.provider === 'string' ? candidate.provider : fallbackProvider;
   const provider = ['google', 'github', 'apple', 'email'].includes(providerRaw) ? (providerRaw as AuthUser['provider']) : fallbackProvider;
+  const tierRaw = typeof candidate.subscriptionTier === 'string' ? candidate.subscriptionTier : 'free';
+  const subscriptionTier: AuthUser['subscriptionTier'] = ['free', 'pro', 'enterprise'].includes(tierRaw)
+    ? (tierRaw as AuthUser['subscriptionTier'])
+    : 'free';
 
   return {
     id: typeof candidate.id === 'string' ? candidate.id : `auth_${provider}_${Date.now()}`,
@@ -50,6 +54,7 @@ export const parseAuthUser = (input: unknown, fallbackProvider: AuthUser['provid
     email: emailRaw,
     provider,
     role: ensureRole(candidate.role),
+    subscriptionTier,
     avatar: typeof candidate.avatar === 'string' ? candidate.avatar : avatarFor(nameRaw),
     memberId: typeof candidate.memberId === 'string' ? candidate.memberId : undefined
   };
@@ -92,13 +97,17 @@ export const requestEmailLogin = async (email: string, password: string, otp?: s
 
   const data = payload as { token?: string; user?: unknown };
   const user = data.user ?? payload;
+  const parsedUser = parseAuthUser(user, 'email');
   
   // Store token
   if (typeof window !== 'undefined' && data.token) {
     localStorage.setItem('authToken', data.token);
   }
   
-  return parseAuthUser(user, 'email');
+  return {
+    token: data.token ?? (getStoredToken() || ''),
+    user: parsedUser
+  };
 };
 
 export const requestPasswordResetOtp = async (email: string) =>

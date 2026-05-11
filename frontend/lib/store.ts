@@ -20,6 +20,7 @@ import type {
   Meeting,
   Member,
   Message,
+  Notification,
   Priority,
   Project,
   ProjectType,
@@ -98,16 +99,24 @@ type NewMeetingInput = {
   location?: string;
 };
 
+export interface Toast {
+  id: string;
+  title: string;
+  description?: string;
+  type: 'success' | 'error' | 'info';
+}
+
 interface AppState extends SeedData {
   sidebarOpen: boolean;
   chatOpen: boolean;
   activeChannelId: string;
-  activeAdminTab: 'members' | 'roles' | 'workspace' | 'projects' | 'billing' | 'danger';
+  activeAdminTab: 'members' | 'roles' | 'workspace' | 'projects' | 'billing' | 'history' | 'danger';
+  toasts: Toast[];
   setActiveWorkspace: (workspaceId: string) => void;
   setActiveProject: (projectId: string) => void;
   setActiveSprint: (sprintId: string | null) => void;
   setActiveView: (view: ViewType) => void;
-  setActiveAdminTab: (tab: 'members' | 'roles' | 'workspace' | 'projects' | 'billing' | 'danger') => void;
+  setActiveAdminTab: (tab: 'members' | 'roles' | 'workspace' | 'projects' | 'billing' | 'history' | 'danger') => void;
   setActiveChannel: (channelId: string) => void;
   toggleSidebar: () => void;
   toggleChat: () => void;
@@ -129,6 +138,8 @@ interface AppState extends SeedData {
   markNotificationRead: (notificationId: string) => void;
   clearNotifications: () => void;
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => void;
+  addToast: (toast: Omit<Toast, 'id'>) => void;
+  removeToast: (id: string) => void;
   addSprint: (input: NewSprintInput) => string;
   updateSprint: (sprintId: string, patch: Partial<Sprint>) => void;
   startSprint: (sprintId: string) => void;
@@ -229,6 +240,7 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: true,
       chatOpen: true,
       activeChannelId: 'channel_launchpad',
+      toasts: [],
       setActiveWorkspace: workspaceId => {
         set(state => {
           const nextProject = state.projects.find(project => project.workspaceId === workspaceId) ?? state.projects[0];
@@ -476,6 +488,21 @@ export const useAppStore = create<AppState>()(
       clearNotifications: () => {
         set({ notifications: [] });
       },
+      addToast: (toast) => {
+        const id = makeId('toast');
+        set(state => ({
+          toasts: [...state.toasts, { ...toast, id }]
+        }));
+        // Auto remove after 3s
+        setTimeout(() => {
+          get().removeToast(id);
+        }, 3000);
+      },
+      removeToast: (id) => {
+        set(state => ({
+          toasts: state.toasts.filter(t => t.id !== id)
+        }));
+      },
       addNotification: (notif) => {
         const notification: Notification = {
           ...notif,
@@ -514,7 +541,7 @@ export const useAppStore = create<AppState>()(
           projectId: input.projectId ?? get().activeProjectId,
           startDate: input.startDate,
           endDate: input.endDate,
-          status: 'planning',
+          status: 'planned',
           goal: input.goal
         };
 

@@ -94,7 +94,9 @@ export function CustomColumnsDialog({ isOpen, onClose, projectId }: CustomColumn
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      distance: 8,
+      activationConstraint: {
+        distance: 8,
+      },
     })
   );
 

@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 export const registerUploadRoutes = async (app: FastifyInstance, mongoService: MongoService) => {
   app.post('/api/v1/uploads/avatar', {
-    preHandler: [app.authenticate as any]
+    preHandler: [(app as any).authenticate]
   }, async (request: any, reply) => {
     const data = await request.file();
     if (!data) {

@@ -13,7 +13,7 @@ export interface PricingPlan {
   features: string[];
 }
 
-export const PRICING_PLANS: Record<string, PricingPlan> = {
+export const PRICING_PLANS: Record<PricingPlan['id'], PricingPlan> = {
   free: {
     id: 'free',
     name: 'Free',
@@ -91,9 +91,12 @@ export const PRICING_PLANS: Record<string, PricingPlan> = {
 };
 
 export function getPlanById(planId: string): PricingPlan | null {
-  return PRICING_PLANS[planId] || null;
+  if (planId in PRICING_PLANS) {
+    return PRICING_PLANS[planId as PricingPlan['id']];
+  }
+  return null;
 }
 
 export function getUserPlanLimits(plan: 'free' | 'pro' | 'enterprise') {
-  return getPlanById(plan)?.limits || PRICING_PLANS.free.limits;
+  return getPlanById(plan)?.limits ?? PRICING_PLANS.free.limits;
 }

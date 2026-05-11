@@ -99,7 +99,7 @@ export const registerBoardRoutes = async (fastify: FastifyInstance, mongoService
         const boardColumns: BoardColumn[] = columns.map(col => ({
           id: col.id || `col_${nanoid(8)}`,
           name: col.name,
-          color: col.color
+          ...(col.color ? { color: col.color } : {})
         }));
 
         const board: Board = {
@@ -153,9 +153,21 @@ export const registerBoardRoutes = async (fastify: FastifyInstance, mongoService
           return reply.status(403).send({ error: 'You do not have permission to update this board' });
         }
 
-        const updates = {
-          ...validation.data,
-          updatedAt: new Date()
+        const updates: Partial<Board> = {
+          updatedAt: new Date(),
+          ...(validation.data.name !== undefined ? { name: validation.data.name } : {}),
+          ...(validation.data.description !== undefined ? { description: validation.data.description } : {}),
+          ...(validation.data.visibility !== undefined ? { visibility: validation.data.visibility } : {}),
+          ...(validation.data.tags !== undefined ? { tags: validation.data.tags } : {}),
+          ...(validation.data.columns !== undefined
+            ? {
+                columns: validation.data.columns.map(col => ({
+                  id: col.id || `col_${nanoid(8)}`,
+                  name: col.name,
+                  ...(col.color ? { color: col.color } : {})
+                }))
+              }
+            : {})
         };
 
         const updated = await mongoService.updateBoard(id, updates);

@@ -44,7 +44,7 @@ function LoginContent() {
   const complete = () => {
     const redirectUrl = searchParams.get('redirect');
     if (redirectUrl) {
-      router.replace(redirectUrl);
+      router.replace(redirectUrl as any);
     } else {
       router.replace('/');
     }

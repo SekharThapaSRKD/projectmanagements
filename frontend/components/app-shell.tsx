@@ -27,6 +27,7 @@ import { CommandPalette } from './command-palette';
 import { InviteDialog } from './invite-dialog';
 import { AdminPanel } from './admin-panel';
 import { HistoryView } from './history-view';
+import { Toaster } from './toaster';
 import { MeetingsView } from './meetings-view';
 import { UserPlus, Menu, X, SquareKanban } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -267,6 +268,7 @@ export function AppShell() {
       <WorkspaceDialog isOpen={isCreatingWorkspace} onClose={() => setIsCreatingWorkspace(false)} />
       <InviteDialog isOpen={isInviting} onClose={() => setIsInviting(false)} projectId={activeProjectId || ''} />
       <CommandPalette />
+      <Toaster />
     </div>
   );
 }

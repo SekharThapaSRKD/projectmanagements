@@ -260,6 +260,7 @@ export function DocsView() {
         );
 
         addNotification?.({
+          type: "system",
           title: "Upload failed",
           message:
             "Unable to create document on server.",
@@ -290,6 +291,7 @@ export function DocsView() {
 
       if (file.size > MAX_BYTES) {
         addNotification?.({
+          type: "system",
           title: "File too large",
           message: `${file.name} exceeds 50MB limit.`,
         });
@@ -313,6 +315,7 @@ export function DocsView() {
         )
       ) {
         addNotification?.({
+          type: "system",
           title: "Unsupported file",
           message: `File type not allowed: ${file.name}`,
         });
@@ -354,6 +357,7 @@ export function DocsView() {
         );
 
         addNotification?.({
+          type: "system",
           title: "Upload error",
           message: String(err),
         });
@@ -505,7 +509,10 @@ export function DocsView() {
 
         <div className="flex-1 overflow-y-auto px-3 pb-6 space-y-1">
           <AnimatePresence>
-            {filteredDocs.map((document) => (
+            {filteredDocs.map((document) => {
+              const fileCount = document.files?.length ?? 0;
+
+              return (
               <motion.button
                 key={document.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -542,10 +549,10 @@ export function DocsView() {
                     <Clock className="h-3 w-3" />
                     <span>{new Date(document.updatedAt).toLocaleDateString()}</span>
                   </div>
-                  {document.files?.length > 0 && (
+                  {fileCount > 0 && (
                     <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--accent))]">
                       <Paperclip className="h-3 w-3" />
-                      <span>{document.files.length}</span>
+                      <span>{fileCount}</span>
                     </div>
                   )}
                 </div>
@@ -557,7 +564,8 @@ export function DocsView() {
                   />
                 )}
               </motion.button>
-            ))}
+              );
+            })}
           </AnimatePresence>
         </div>
       </aside>

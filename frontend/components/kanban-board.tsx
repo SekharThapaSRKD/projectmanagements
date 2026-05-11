@@ -3,7 +3,7 @@
 import { DndContext, DragEndEvent, KeyboardSensor, PointerSensor, closestCenter, closestCorners, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Plus, SquareKanban, MessageCircle, Code2, Hash, Clock, Flame, Circle, Settings } from 'lucide-react';
+import { GripVertical, Plus, SquareKanban, MessageCircle, Code2, Hash, Clock, Flame, Circle, Settings, Paperclip } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
@@ -208,7 +208,21 @@ export function KanbanBoard({ onTaskClick, filterSprintId = null, onCreateTask }
     ]
   );
 
-  const boardTasks = useMemo(() => tasks.filter(task => task.projectId === activeProjectId && (filterSprintId == null || task.sprintId === filterSprintId)), [activeProjectId, filterSprintId, tasks]);
+  const boardTasks = useMemo(() => {
+    return tasks.filter(task => {
+      if (task.projectId !== activeProjectId) return false;
+      
+      if (filterSprintId != null) {
+        return task.sprintId === filterSprintId;
+      }
+      
+      if (project?.type === 'scrum') {
+        return task.sprintId != null;
+      }
+      
+      return true;
+    });
+  }, [activeProjectId, filterSprintId, tasks, project?.type]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),

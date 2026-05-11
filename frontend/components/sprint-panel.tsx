@@ -20,7 +20,7 @@ const addDays = (isoString: string, days: number) => {
 };
 
 export function SprintPanel() {
-  const { sprints, tasks, activeProjectId, addSprint, updateSprint, startSprint, completeSprint, activeSprintId, setActiveSprint, addNotification } = useAppStore();
+  const { sprints, tasks, activeProjectId, addSprint, updateSprint, startSprint, completeSprint, activeSprintId, setActiveSprint, addToast } = useAppStore();
   const [name, setName] = useState('');
   const [goal, setGoal] = useState('');
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -35,28 +35,28 @@ export function SprintPanel() {
 
   const handleCreateSprint = () => {
     if (!activeProjectId) {
-      addNotification({
-        type: 'system',
+      addToast({
+        type: 'error',
         title: 'Project Required',
-        message: 'Please select a workspace and a project first to create a sprint.'
+        description: 'Please select a workspace and a project first to create a sprint.'
       });
       return;
     }
 
     if (!name.trim()) {
-      addNotification({
-        type: 'system',
+      addToast({
+        type: 'error',
         title: 'Validation Error',
-        message: 'Sprint name is required.'
+        description: 'Sprint name is required.'
       });
       return;
     }
 
     if (new Date(endDate) < new Date(startDate)) {
-      addNotification({
-        type: 'system',
+      addToast({
+        type: 'error',
         title: 'Validation Error',
-        message: 'Sprint end date must be after the start date.'
+        description: 'Sprint end date must be after the start date.'
       });
       return;
     }
@@ -72,6 +72,12 @@ export function SprintPanel() {
     setGoal('');
     setStartDate(new Date().toISOString().slice(0, 10));
     setEndDate(addDays(new Date().toISOString(), 14));
+
+    addToast({
+      type: 'success',
+      title: 'Sprint Created',
+      description: `Successfully created ${name.trim()}.`
+    });
   };
 
   const progressFor = (sprint: Sprint) => {
@@ -92,19 +98,19 @@ export function SprintPanel() {
     if (!editingSprint) return;
 
     if (!editName.trim()) {
-      addNotification({
-        type: 'system',
+      addToast({
+        type: 'error',
         title: 'Validation Error',
-        message: 'Sprint name is required.'
+        description: 'Sprint name is required.'
       });
       return;
     }
 
     if (new Date(editEndDate) < new Date(editStartDate)) {
-      addNotification({
-        type: 'system',
+      addToast({
+        type: 'error',
         title: 'Validation Error',
-        message: 'Sprint end date must be after the start date.'
+        description: 'Sprint end date must be after the start date.'
       });
       return;
     }
@@ -116,6 +122,12 @@ export function SprintPanel() {
       endDate: new Date(editEndDate).toISOString()
     });
     setEditingSprint(null);
+
+    addToast({
+      type: 'success',
+      title: 'Sprint Updated',
+      description: 'Changes have been saved successfully.'
+    });
   };
 
   if (!activeProjectId) {
@@ -319,7 +331,7 @@ export function SprintPanel() {
                   >
                     <Edit3 className="h-4 w-4 text-[hsl(var(--accent))]" /> Edit
                   </button>
-                  {sprint.status === 'planning' && (
+                  {sprint.status === 'planned' && (
                     <button type="button" onClick={() => startSprint(sprint.id)} className="inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--accent)/0.1)] px-4 py-2 text-xs font-bold text-[hsl(var(--accent))] transition hover:bg-[hsl(var(--accent)/0.2)] border border-[hsl(var(--accent)/0.2)]">
                       <Play className="h-4 w-4" /> Start Sprint
                     </button>

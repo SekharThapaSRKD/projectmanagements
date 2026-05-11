@@ -130,6 +130,10 @@ export const registerStripeRoutes = async (
             });
           }
         } else {
+          if (!subscription || !subscription.stripeSubscriptionId) {
+            return reply.status(400).send({ error: 'No active Stripe subscription' });
+          }
+
           // Update existing subscription
           const stripeSubscription = await stripeService.updateSubscription(
             subscription.stripeSubscriptionId!,
@@ -255,7 +259,8 @@ export const registerStripeRoutes = async (
         return reply.status(400).send({ error: 'Missing Stripe signature' });
       }
 
-      const event = stripeService.verifyWebhookSignature(request.rawBody as Buffer, signature);
+      const rawBody = (request as any).rawBody as Buffer;
+      const event = stripeService.verifyWebhookSignature(rawBody, signature);
 
       switch (event.type) {
         case 'customer.subscription.updated':

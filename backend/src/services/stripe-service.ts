@@ -44,10 +44,16 @@ export class StripeService {
 
   // Update subscription
   async updateSubscription(subscriptionId: string, priceId: string) {
+    const existingSubscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+    const firstItem = existingSubscription.items.data[0];
+    if (!firstItem) {
+      throw new Error('Stripe subscription has no line items');
+    }
+
     return this.stripe.subscriptions.update(subscriptionId, {
       items: [
         {
-          id: (await this.stripe.subscriptions.retrieve(subscriptionId)).items.data[0].id,
+          id: firstItem.id,
           price: priceId,
         },
       ],

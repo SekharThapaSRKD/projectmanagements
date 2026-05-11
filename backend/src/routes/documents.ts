@@ -89,10 +89,13 @@ export async function registerDocumentRoutes(
       const document = await mongoService.getDocument(documentId);
       if (!document) return reply.code(404).send({ error: 'Document not found' });
 
-      const updated = await mongoService.updateDocument(documentId, {
-        ...result.data,
+      const updatePayload: Partial<Document> = {
         updatedAt: new Date(),
-      });
+        ...(result.data.title !== undefined ? { title: result.data.title } : {}),
+        ...(result.data.content !== undefined ? { content: result.data.content } : {}),
+      };
+
+      const updated = await mongoService.updateDocument(documentId, updatePayload);
 
       realtimeHub.broadcast({ type: 'document:updated', data: updated });
       return reply.send(updated);

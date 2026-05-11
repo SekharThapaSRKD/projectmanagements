@@ -4,6 +4,7 @@ import { Code2, Plus, Trash2, X, MessageSquare, Tag, AlignLeft, BarChart2, User,
 import { useMemo, useState } from 'react';
 import { useAppStore } from '@/lib/store';
 import type { CodeSnippet, Task } from '@/lib/types';
+import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type TaskDialogProps = {
@@ -27,6 +28,7 @@ export function TaskDialog({ task, isNew, onClose }: TaskDialogProps) {
   const [attachments, setAttachments] = useState(task?.attachments ?? []);
   const [dueDate, setDueDate] = useState(task?.dueDate ?? '');
   const [comment, setComment] = useState('');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const activeProject = useAppStore(state => state.projects.find(p => p.id === (task?.projectId ?? activeProjectId)));
   const projectMembers = useMemo(() => {
@@ -73,7 +75,7 @@ export function TaskDialog({ task, isNew, onClose }: TaskDialogProps) {
   };
 
   const handleDelete = () => {
-    if (task && confirm('Are you sure you want to delete this task?')) {
+    if (task) {
       deleteTask(task.id);
       onClose();
     }
@@ -357,7 +359,7 @@ export function TaskDialog({ task, isNew, onClose }: TaskDialogProps) {
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-panel)/0.5)] px-8 py-5">
-           <button type="button" onClick={handleDelete} className="flex h-11 items-center gap-2 rounded-2xl border border-[hsl(var(--danger))/0.2] bg-[hsl(var(--danger)/0.05)] px-5 text-sm font-bold text-[hsl(var(--danger))] transition-all hover:bg-[hsl(var(--danger)/0.1)]">
+           <button type="button" onClick={() => setIsDeleteDialogOpen(true)} className="flex h-11 items-center gap-2 rounded-2xl border border-[hsl(var(--danger))/0.2] bg-[hsl(var(--danger)/0.05)] px-5 text-sm font-bold text-[hsl(var(--danger))] transition-all hover:bg-[hsl(var(--danger)/0.1)]">
              <Trash2 className="h-4 w-4" /> Delete Task
            </button>
            <div className="flex items-center gap-4">
@@ -368,6 +370,16 @@ export function TaskDialog({ task, isNew, onClose }: TaskDialogProps) {
            </div>
         </div>
       </motion.div>
+
+      <DeleteConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Task"
+        description="Are you sure you want to delete this task? This action will permanently remove it from the project."
+        confirmLabel="Delete Task"
+        isPermanent={true}
+      />
     </div>
   );
 }

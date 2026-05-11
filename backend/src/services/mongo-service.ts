@@ -242,7 +242,7 @@ export class MongoService {
       { $set: { ...updates, updatedAt: new Date() } },
       { returnDocument: 'after' }
     );
-    return result.value as Document | null;
+    return result as Document | null;
   }
 
   async deleteDocument(id: string): Promise<void> {

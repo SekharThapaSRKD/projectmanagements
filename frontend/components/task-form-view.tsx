@@ -4,6 +4,7 @@ import { Code2, Plus, Trash2, X, ArrowLeft, Save, MessageSquare, Tag, AlignLeft,
 import { useMemo, useState } from 'react';
 import { useAppStore } from '@/lib/store';
 import type { CodeSnippet, Task } from '@/lib/types';
+import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type TaskFormViewProps = {
@@ -27,6 +28,7 @@ export function TaskFormView({ task, onClose }: TaskFormViewProps) {
   const [snippet, setSnippet] = useState<CodeSnippet>(task?.codeSnippets?.[0] ?? initialSnippet());
   const [dueDate, setDueDate] = useState(task?.dueDate ?? '');
   const [comment, setComment] = useState('');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const activeProject = useAppStore(state => state.projects.find(p => p.id === (task?.projectId ?? activeProjectId)));
   const projectMembers = useMemo(() => {
@@ -68,7 +70,7 @@ export function TaskFormView({ task, onClose }: TaskFormViewProps) {
   };
 
   const handleDelete = () => {
-    if (task && confirm('Are you sure you want to delete this task?')) {
+    if (task) {
       deleteTask(task.id);
       onClose();
     }
@@ -100,7 +102,7 @@ export function TaskFormView({ task, onClose }: TaskFormViewProps) {
         <div className="flex items-center gap-3">
           {!isNew && (
             <button 
-              onClick={handleDelete}
+              onClick={() => setIsDeleteDialogOpen(true)}
               className="flex h-12 items-center gap-2 rounded-2xl border border-[hsl(var(--danger))/0.2] bg-[hsl(var(--danger)/0.05)] px-6 text-sm font-bold text-[hsl(var(--danger))] transition-all hover:bg-[hsl(var(--danger)/0.1)]"
             >
               <Trash2 className="h-4 w-4" />
@@ -314,6 +316,16 @@ export function TaskFormView({ task, onClose }: TaskFormViewProps) {
           </div>
         </aside>
       </div>
+
+      <DeleteConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Task"
+        description="Are you sure you want to delete this task? This action will permanently remove it from the project."
+        confirmLabel="Delete Task"
+        isPermanent={true}
+      />
     </div>
   );
 }
