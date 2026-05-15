@@ -114,7 +114,7 @@ export function BoardDialog({ isOpen, onClose, projectId }: BoardDialogProps) {
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute right-6 top-6 text-[hsl(var(--muted))] transition-colors hover:text-white"
+          className="absolute right-6 top-6 text-[hsl(var(--muted))] transition-colors hover:text-[hsl(var(--text))]"
         >
           <X className="h-6 w-6" />
         </button>
@@ -122,7 +122,7 @@ export function BoardDialog({ isOpen, onClose, projectId }: BoardDialogProps) {
         <div className="space-y-6">
           {/* Header */}
           <div>
-            <h2 className="text-2xl font-bold text-white">Create Custom Board</h2>
+            <h2 className="text-2xl font-bold text-[hsl(var(--text))]">Create Custom Board</h2>
             <p className="mt-1 text-sm text-[hsl(var(--muted))]">
               Design your own board layout with custom columns
             </p>
@@ -130,31 +130,31 @@ export function BoardDialog({ isOpen, onClose, projectId }: BoardDialogProps) {
 
           {/* Board Name */}
           <div>
-            <label className="block text-sm font-medium text-white mb-2">Board Name *</label>
+            <label className="block text-sm font-medium text-[hsl(var(--text))] mb-2">Board Name *</label>
             <input
               type="text"
               value={boardName}
               onChange={e => setBoardName(e.target.value)}
               placeholder="e.g., Feature Roadmap, Bug Tracking"
-              className="w-full rounded-lg border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-input))] px-4 py-2 text-white placeholder:text-[hsl(var(--muted))] focus:border-[hsl(var(--accent))] focus:outline-none"
+              className="w-full rounded-lg border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-input))] px-4 py-2 text-[hsl(var(--text))] placeholder:text-[hsl(var(--muted))] focus:border-[hsl(var(--accent))] focus:outline-none"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-white mb-2">Description</label>
+            <label className="block text-sm font-medium text-[hsl(var(--text))] mb-2">Description</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Describe the purpose of this board..."
               rows={2}
-              className="w-full rounded-lg border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-input))] px-4 py-2 text-white placeholder:text-[hsl(var(--muted))] focus:border-[hsl(var(--accent))] focus:outline-none resize-none"
+              className="w-full rounded-lg border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-input))] px-4 py-2 text-[hsl(var(--text))] placeholder:text-[hsl(var(--muted))] focus:border-[hsl(var(--accent))] focus:outline-none resize-none"
             />
           </div>
 
           {/* Visibility */}
           <div>
-            <label className="block text-sm font-medium text-white mb-3">Visibility</label>
+            <label className="block text-sm font-medium text-[hsl(var(--text))] mb-3">Visibility</label>
             <div className="grid grid-cols-3 gap-3">
               {(['private', 'team', 'public'] as const).map(v => (
                 <button
@@ -177,7 +177,7 @@ export function BoardDialog({ isOpen, onClose, projectId }: BoardDialogProps) {
 
           {/* Columns */}
           <div>
-            <label className="block text-sm font-medium text-white mb-3">Columns *</label>
+            <label className="block text-sm font-medium text-[hsl(var(--text))] mb-3">Columns *</label>
             <div className="space-y-2 mb-4">
               {columns.map(col => (
                 <div key={col.id} className="flex items-center gap-3 rounded-lg border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-input))] p-3">
@@ -185,7 +185,7 @@ export function BoardDialog({ isOpen, onClose, projectId }: BoardDialogProps) {
                     className="h-4 w-4 rounded"
                     style={{ backgroundColor: col.color }}
                   />
-                  <span className="flex-1 text-white font-medium">{col.name}</span>
+                  <span className="flex-1 text-[hsl(var(--text))] font-medium">{col.name}</span>
                   {columns.length > 1 && (
                     <button
                       onClick={() => removeColumn(col.id)}
@@ -205,7 +205,7 @@ export function BoardDialog({ isOpen, onClose, projectId }: BoardDialogProps) {
                 value={newColumnName}
                 onChange={e => setNewColumnName(e.target.value)}
                 placeholder="New column name..."
-                className="w-full rounded border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg))] px-3 py-2 text-sm text-white placeholder:text-[hsl(var(--muted))] focus:border-[hsl(var(--accent))] focus:outline-none"
+                className="w-full rounded border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg))] px-3 py-2 text-sm text-[hsl(var(--text))] placeholder:text-[hsl(var(--muted))] focus:border-[hsl(var(--accent))] focus:outline-none"
                 onKeyPress={e => e.key === 'Enter' && addColumn()}
               />
               <div className="flex items-center gap-2">
@@ -228,7 +228,7 @@ export function BoardDialog({ isOpen, onClose, projectId }: BoardDialogProps) {
               <button
                 onClick={addColumn}
                 disabled={!newColumnName.trim()}
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-[hsl(var(--accent))] px-4 py-2 font-medium text-white transition-all hover:bg-[hsl(var(--accent)/0.9)] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-[hsl(var(--accent))] px-4 py-2 font-medium text-black transition-all hover:bg-[hsl(var(--accent)/0.9)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="h-4 w-4" />
                 Add Column
@@ -240,13 +240,13 @@ export function BoardDialog({ isOpen, onClose, projectId }: BoardDialogProps) {
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 rounded-lg border border-[hsl(var(--border-soft))] px-4 py-3 font-medium text-white transition-all hover:bg-white/5"
+              className="flex-1 rounded-lg border border-[hsl(var(--border-soft))] px-4 py-3 font-medium text-[hsl(var(--text))] transition-all hover:bg-[hsl(var(--bg-soft))]"
             >
               Cancel
             </button>
             <button
               onClick={handleCreateBoard}
-              className="flex-1 rounded-lg bg-[hsl(var(--accent))] px-4 py-3 font-medium text-white transition-all hover:bg-[hsl(var(--accent)/0.9)]"
+              className="flex-1 rounded-lg bg-[hsl(var(--accent))] px-4 py-3 font-medium text-black transition-all hover:bg-[hsl(var(--accent)/0.9)]"
             >
               Create Board
             </button>

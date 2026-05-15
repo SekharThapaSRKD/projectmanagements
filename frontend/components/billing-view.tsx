@@ -118,7 +118,7 @@ export function BillingView() {
   return (
     <div className="space-y-8 max-w-4xl">
       <div>
-        <h2 className="text-2xl font-bold mb-2 text-white">Billing & Subscription</h2>
+        <h2 className="text-2xl font-bold mb-2 text-[hsl(var(--text))]">Billing & Subscription</h2>
         <p className="text-[hsl(var(--muted))]">Manage your TeamFlow subscription and resource usage</p>
       </div>
 
@@ -126,7 +126,7 @@ export function BillingView() {
         <div className="flex items-start gap-3">
           <CheckCircle2 className={`mt-0.5 h-5 w-5 ${currentTier === 'free' ? 'text-blue-300' : 'text-emerald-300'}`} />
           <div>
-            <p className="text-sm font-semibold text-white">
+            <p className="text-sm font-semibold text-[hsl(var(--text))]">
               {currentTier === 'free' ? 'Free plan active' : `${currentTier.toUpperCase()} unlocked`}
             </p>
             <p className="text-sm text-[hsl(var(--muted))]">
@@ -160,9 +160,9 @@ export function BillingView() {
         </div>
       )}
 
-      <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-6 space-y-6">
+      <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))/0.5] backdrop-blur-md p-6 space-y-6">
         <div>
-          <h3 className="text-lg font-semibold mb-4 text-white">Current Plan</h3>
+          <h3 className="text-lg font-semibold mb-4 text-[hsl(var(--text))]">Current Plan</h3>
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -190,8 +190,8 @@ export function BillingView() {
         </div>
 
         {subscription.plan !== 'free' && subscription.status === 'active' && !subscription.cancelAtPeriodEnd && (
-          <div className="border-t border-white/10 pt-4">
-            <h3 className="text-lg font-semibold mb-4 text-white">Manage Subscription</h3>
+          <div className="border-t border-[hsl(var(--border))] pt-4">
+            <h3 className="text-lg font-semibold mb-4 text-[hsl(var(--text))]">Manage Subscription</h3>
             <button
               onClick={handleCancelSubscription}
               disabled={canceling}

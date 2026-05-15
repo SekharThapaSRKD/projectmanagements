@@ -220,7 +220,7 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
                   "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-black transition-all duration-300",
                   activeProjectId === project.id
                     ? "bg-[hsl(var(--accent))] text-black shadow-lg shadow-[hsl(var(--accent)/0.4)] scale-110"
-                    : "bg-white/5 text-[hsl(var(--muted))] group-hover:bg-white/15 group-hover:text-white group-hover:scale-105"
+                    : "bg-white/5 text-[hsl(var(--muted))] group-hover:bg-white/15 group-hover:text-[hsl(var(--text))] group-hover:scale-105"
                 )}>
                   {project.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                 </div>
@@ -236,7 +236,7 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
                             e.stopPropagation();
                             setActiveView('project-settings');
                           }}
-                          className="rounded-lg p-1 text-[hsl(var(--muted))] transition hover:bg-white/10 hover:text-white"
+                          className="rounded-lg p-1 text-[hsl(var(--muted))] transition hover:bg-white/10 hover:text-[hsl(var(--text))]"
                         >
                           <Settings2 className="h-3.5 w-3.5" />
                         </button>

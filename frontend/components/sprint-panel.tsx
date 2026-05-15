@@ -473,7 +473,7 @@ export function SprintPanel() {
                   <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--muted))]">Edit Sprint</p>
                   <h3 className="text-xl font-bold text-[hsl(var(--text))]">Update sprint timeline</h3>
                 </div>
-                <button type="button" onClick={() => setEditingSprint(null)} className="rounded-full p-2 text-[hsl(var(--muted))] transition hover:bg-[hsl(var(--bg-soft))] hover:text-white">
+                <button type="button" onClick={() => setEditingSprint(null)} className="rounded-full p-2 text-[hsl(var(--muted))] transition hover:bg-[hsl(var(--bg-soft))] hover:text-[hsl(var(--text))]">
                   <X className="h-5 w-5" />
                 </button>
               </div>

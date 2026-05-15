@@ -457,7 +457,7 @@ export function DocsView() {
       <aside className="hidden lg:flex flex-col border-r border-[hsl(var(--border)/0.5)] bg-[hsl(var(--bg-panel)/0.5)]">
         <div className="p-6 space-y-6">
           <div>
-            <h1 className="text-2xl font-black flex items-center gap-3 text-white uppercase tracking-tighter italic">
+            <h1 className="text-2xl font-black flex items-center gap-3 text-[hsl(var(--text))] uppercase tracking-tighter italic">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(var(--accent)/0.1)] text-[hsl(var(--accent))] shadow-inner">
                 <FileText className="h-6 w-6" />
               </div>
@@ -484,7 +484,7 @@ export function DocsView() {
             <button
               onClick={openUploadPicker}
               disabled={uploadingFiles.size > 0}
-              className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-white/10 active:scale-95 disabled:opacity-50"
+              className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))/0.5] text-[10px] font-black uppercase tracking-widest text-[hsl(var(--text))] transition hover:bg-[hsl(var(--bg-soft))] active:scale-95 disabled:opacity-50"
             >
               {uploadingFiles.size > 0 ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -502,7 +502,7 @@ export function DocsView() {
               placeholder="Search doc sector..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-12 bg-white/5 border border-white/10 rounded-2xl pl-11 pr-4 text-sm text-white placeholder-[hsl(var(--muted))] outline-none focus:border-[hsl(var(--accent)/0.5)] focus:ring-4 focus:ring-[hsl(var(--accent)/0.05)] transition-all"
+              className="w-full h-12 bg-[hsl(var(--bg-soft))/0.5] border border-[hsl(var(--border))] rounded-2xl pl-11 pr-4 text-sm text-[hsl(var(--text))] placeholder-[hsl(var(--muted))] outline-none focus:border-[hsl(var(--accent)/0.5)] focus:ring-4 focus:ring-[hsl(var(--accent)/0.05)] transition-all"
             />
           </div>
         </div>
@@ -534,7 +534,7 @@ export function DocsView() {
                 <div className="flex w-full items-center justify-between">
                   <p className={cn(
                     "truncate font-black uppercase tracking-tight text-xs",
-                    selectedId === document.id ? "text-white" : "text-white/60 group-hover:text-white"
+                    selectedId === document.id ? "text-[hsl(var(--text))]" : "text-[hsl(var(--text))/0.6] group-hover:text-[hsl(var(--text))]"
                   )}>
                     {document.title || "Untitled Document"}
                   </p>

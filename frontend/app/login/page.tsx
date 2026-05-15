@@ -4,7 +4,7 @@ import { Apple, ArrowRight, Github, Mail, ShieldCheck, Sparkles, Loader2, Comman
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
 import { useAuthStore } from '@/lib/auth-store';
 import { decodeOAuthUser, getAuthMode } from '@/lib/auth-bridge';
 import type { OAuthProvider } from '@/lib/types';
@@ -38,17 +38,36 @@ function LoginContent() {
   const [resetStep, setResetStep] = useState<'request' | 'verify'>('request');
   const [resetCode, setResetCode] = useState('');
   const [resetNewPassword, setResetNewPassword] = useState('');
+  const [progressMessage, setProgressMessage] = useState('');
+  const [progressStep, setProgressStep] = useState(0);
+
+  // Simulate 2s loading progress with 4 messages (500ms each)
+  const simulateLoadingProgress = useCallback(async () => {
+    const messages = [
+      'Verifying credentials',
+      'Authenticating session',
+      'Syncing workspace data',
+      'Initializing dashboard'
+    ];
+
+    for (let i = 0; i < messages.length; i++) {
+      setProgressMessage(messages[i]);
+      setProgressStep(i);
+      // 500ms per step -> 2 seconds total
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }, []);
 
   const authMode = getAuthMode();
 
-  const complete = () => {
+  const complete = useCallback(() => {
     const redirectUrl = searchParams.get('redirect');
     if (redirectUrl) {
       router.replace(redirectUrl as any);
     } else {
       router.replace('/');
     }
-  };
+  }, [searchParams, router]);
 
   useEffect(() => {
     const authSuccess = searchParams.get('authSuccess');
@@ -93,17 +112,21 @@ function LoginContent() {
     }
   }, [completeOAuthLogin, router, searchParams]);
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = useCallback(async (event: React.FormEvent) => {
     event.preventDefault();
     setPending(true);
     setLocalError(null);
     clearAuthError();
+    setProgressMessage('');
+    setProgressStep(0);
 
     try {
       if (mode === 'register') {
+        await simulateLoadingProgress();
         await register(name || 'User', email, password);
         complete();
       } else if (mode === 'login') {
+        await simulateLoadingProgress();
         const result = await loginWithEmail(email, password, challengeRequired ? twoFactorCode : undefined);
         if (result && 'twoFactorRequired' in result) {
           setChallengeRequired(true);
@@ -113,9 +136,11 @@ function LoginContent() {
         complete();
       } else {
         if (resetStep === 'request') {
+          await simulateLoadingProgress();
           await requestPasswordReset(email);
           setResetStep('verify');
         } else {
+          await simulateLoadingProgress();
           await resetPassword(email, resetCode, resetNewPassword);
           setMode('login');
           setResetStep('request');
@@ -128,15 +153,21 @@ function LoginContent() {
       setLocalError(error instanceof Error ? error.message : 'Authentication failed.');
     } finally {
       setPending(false);
+      setProgressMessage('');
+      setProgressStep(0);
     }
-  };
+  }, [mode, name, email, password, challengeRequired, twoFactorCode, resetStep, resetCode, resetNewPassword, register, loginWithEmail, requestPasswordReset, resetPassword, complete, clearAuthError]);
 
-  const handleOAuth = async (provider: OAuthProvider) => {
+  const handleOAuth = useCallback(async (provider: OAuthProvider) => {
     setPending(true);
     setLocalError(null);
     clearAuthError();
 
+    setProgressMessage('');
+    setProgressStep(0);
+
     try {
+      await simulateLoadingProgress();
       if (provider === 'google') await loginWithGoogle();
       if (provider === 'github') await loginWithGitHub();
       if (provider === 'apple') await loginWithApple();
@@ -148,33 +179,80 @@ function LoginContent() {
       setLocalError(error instanceof Error ? error.message : 'OAuth sign-in failed.');
       setPending(false);
     }
-  };
+    finally {
+      setProgressMessage('');
+      setProgressStep(0);
+    }
+  }, [loginWithGoogle, loginWithGitHub, loginWithApple, authMode, complete, clearAuthError]);
 
-  const LoadingOverlay = () => (
-    <AnimatePresence>
-      {pending && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md"
-        >
-          <div className="flex flex-col items-center gap-6 text-center">
-            <div className="relative">
-              <div className="h-20 w-20 animate-spin rounded-full border-4 border-[hsl(var(--accent)/0.1)] border-t-[hsl(var(--accent))]" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Command className="h-8 w-8 text-[hsl(var(--accent))]" />
+  const LoadingOverlay = () => {
+    // Optimized: GPU-accelerated animation container with will-change hint
+    const overlayStyle = {
+      willChange: 'opacity' as const,
+      transform: 'translateZ(0)'
+    };
+
+    // simulateLoadingProgress moved to outer scope so handlers can call it
+
+    // Memoized percentage
+    const progressPercent = useMemo(() => Math.min(((progressStep + 1) / 4) * 100, 100), [progressStep]);
+
+    // Loading overlay UI restored: spinner, progress message, percentage, progress bar
+    return (
+      <AnimatePresence mode="wait">
+        {pending && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md"
+            style={overlayStyle}
+          >
+            <div className="w-full max-w-md rounded-lg bg-[rgba(0,0,0,0.45)] p-6">
+              <div className="flex items-center gap-4">
+                <div className="relative flex h-14 w-14 items-center justify-center">
+                  <div className="h-14 w-14 animate-spin rounded-full border-4 border-[hsl(var(--accent)/0.12)] border-t-[hsl(var(--accent))]" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Command className="h-6 w-6 text-[hsl(var(--accent))]" />
+                  </div>
+                </div>
+
+                <div className="flex-1 text-left">
+                  <h3 className="text-lg font-extrabold uppercase tracking-wide text-white">Logging in</h3>
+
+                  <div className="mt-1 h-5">
+                    <AnimatePresence mode="wait">
+                      <motion.p
+                        key={progressMessage}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="text-sm text-[hsl(var(--muted))]"
+                      >
+                        {progressMessage}
+                      </motion.p>
+                    </AnimatePresence>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-3">
+                    <div className="flex-1 rounded-full bg-white/10 h-2 overflow-hidden">
+                      <motion.div
+                        className="h-2 bg-[hsl(var(--accent))]"
+                        animate={{ width: `${progressPercent}%` }}
+                        transition={{ duration: 0.45, ease: 'easeOut' }}
+                      />
+                    </div>
+
+                    <div className="w-12 text-right text-sm font-bold text-white">{Math.round(progressPercent)}%</div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div>
-              <h3 className="text-xl font-black uppercase tracking-widest text-white">Initializing Session</h3>
-              <p className="mt-2 text-sm text-[hsl(var(--muted))]">Synchronizing with workspace core...</p>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  };
 
   return (
     <main className="min-h-screen bg-[hsl(var(--bg))] selection:bg-[hsl(var(--accent)/0.3)] selection:text-white">

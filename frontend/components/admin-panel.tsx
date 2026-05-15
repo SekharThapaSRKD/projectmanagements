@@ -174,7 +174,7 @@ export function AdminPanel() {
   if (!isMounted) return null;
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-gray-950 text-white">
+    <div className="relative flex h-full flex-col overflow-hidden bg-[hsl(var(--bg))] text-[hsl(var(--text))]">
       {/* Background */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute -top-1/2 -left-1/4 h-96 w-96 rounded-full bg-blue-500/5 blur-3xl" />
@@ -182,15 +182,15 @@ export function AdminPanel() {
       </div>
 
       {/* Header */}
-      <header className="border-b border-white/10 bg-black/40 backdrop-blur-xl px-8 py-6">
+      <header className="border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))] backdrop-blur-xl px-8 py-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-white mb-2">Admin Settings</h1>
-          <p className="text-sm text-gray-400">Manage your workspace, members, and permissions</p>
+          <h1 className="text-3xl font-bold text-[hsl(var(--text))] mb-2">Admin Settings</h1>
+          <p className="text-sm text-[hsl(var(--muted))]">Manage your workspace, members, and permissions</p>
         </div>
       </header>
 
       {/* Tabs */}
-      <div className="border-b border-white/10 bg-black/20 backdrop-blur-sm px-8">
+      <div className="border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))] backdrop-blur-sm px-8">
         <nav className="max-w-7xl mx-auto flex gap-1">
           {tabs.map(tab => (
             <button
@@ -199,8 +199,8 @@ export function AdminPanel() {
               className={cn(
                 "flex items-center gap-2 px-4 py-4 text-sm font-medium border-b-2 transition-all",
                 activeAdminTab === tab.id 
-                  ? "border-blue-500 text-white" 
-                  : "border-transparent text-gray-400 hover:text-gray-300"
+                  ? "border-blue-500 text-[hsl(var(--accent))]" 
+                  : "border-transparent text-[hsl(var(--muted))] hover:text-[hsl(var(--text))]"
               )}
             >
               <tab.icon className="w-4 h-4" />
@@ -225,11 +225,11 @@ export function AdminPanel() {
                 {/* Members Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-bold text-white">Team Members ({members.length})</h2>
+                    <h2 className="text-2xl font-bold text-[hsl(var(--text))]">Team Members ({members.length})</h2>
                   </div>
                   <button 
                     onClick={() => setInviteOpen(true)}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors w-full sm:w-auto"
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-[hsl(var(--accent))] hover:opacity-90 text-black font-medium rounded-lg transition-colors w-full sm:w-auto"
                   >
                     <UserPlus className="w-4 h-4" />
                     Invite Member
@@ -243,11 +243,11 @@ export function AdminPanel() {
                       key={member.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-4 px-6 py-4 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
-                    >
+                    className="flex items-center gap-4 px-6 py-4 bg-[hsl(var(--bg-soft))/0.5] border border-[hsl(var(--border))] rounded-lg hover:bg-[hsl(var(--bg-soft))] transition-colors"
+                  >
                       {/* Avatar */}
                       <div className="flex-shrink-0">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold text-sm">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 text-black font-bold text-sm">
                           {member.avatar || (member.name || '??').substring(0, 2).toUpperCase()}
                         </div>
                       </div>
@@ -255,7 +255,7 @@ export function AdminPanel() {
                       {/* Member Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-bold text-white truncate">{member.name}</p>
+                          <p className="font-bold text-[hsl(var(--text))] truncate">{member.name}</p>
                           <span className={cn(
                             "flex-shrink-0 px-2.5 py-1 text-xs font-semibold rounded-full border",
                             getRoleBadgeColor(member.role)
@@ -276,7 +276,7 @@ export function AdminPanel() {
                             <select 
                               value={member.role} 
                               onChange={(e) => updateMember(member.id, { role: e.target.value as MemberRole })}
-                              className="px-3 py-2 bg-gray-800 border border-gray-700 text-sm text-white rounded-lg hover:bg-gray-700 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-blue-500"
+                              className="px-3 py-2 bg-[hsl(var(--bg-soft))] border border-[hsl(var(--border))] text-sm text-[hsl(var(--text))] rounded-lg hover:bg-[hsl(var(--bg-soft))/0.8] transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               {['admin', 'developer', 'viewer'].map(r => (
                                 <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
@@ -295,7 +295,7 @@ export function AdminPanel() {
                             </button>
                           </>
                         ) : (
-                          <span className="text-sm text-gray-500">Workspace owner</span>
+                          <span className="text-sm text-[hsl(var(--muted))/0.7]">Workspace owner</span>
                         )}
                       </div>
                     </motion.div>
@@ -312,22 +312,22 @@ export function AdminPanel() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="space-y-6"
               >
-                <h2 className="text-2xl font-bold text-white">Role Permissions</h2>
+                <h2 className="text-2xl font-bold text-[hsl(var(--text))]">Role Permissions</h2>
 
-                <div className="overflow-x-auto rounded-lg border border-white/10">
+                <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))]">
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="bg-white/5 border-b border-white/10">
-                        <th className="px-6 py-4 font-bold text-gray-300">Permission</th>
+                      <tr className="bg-[hsl(var(--bg-soft))/0.5] border-b border-[hsl(var(--border))]">
+                        <th className="px-6 py-4 font-bold text-[hsl(var(--text))/0.8]">Permission</th>
                         {Object.keys(ROLE_PERMISSIONS).map(role => (
-                          <th key={role} className="px-6 py-4 font-bold text-gray-300 text-center capitalize">{role}</th>
+                          <th key={role} className="px-6 py-4 font-bold text-[hsl(var(--text))/0.8] text-center capitalize">{role}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {Object.keys(ROLE_PERMISSIONS.owner).map((permission, i) => (
-                        <tr key={permission} className="border-b border-white/5 hover:bg-white/[0.02]">
-                          <td className="px-6 py-4 font-medium text-gray-300 capitalize">
+                        <tr key={permission} className="border-b border-[hsl(var(--border))/0.5] hover:bg-[hsl(var(--bg-soft))/0.3]">
+                          <td className="px-6 py-4 font-medium text-[hsl(var(--text))/0.8] capitalize">
                             {permission.replace(/([A-Z])/g, ' $1').toLowerCase()}
                           </td>
                           {Object.keys(ROLE_PERMISSIONS).map(role => (
@@ -357,8 +357,8 @@ export function AdminPanel() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-2xl font-bold text-white">Workspaces</h2>
-                    <p className="text-sm text-gray-400 mt-1">You have {workspaces.length} workspace{workspaces.length !== 1 ? 's' : ''}</p>
+                    <h2 className="text-2xl font-bold text-[hsl(var(--text))]">Workspaces</h2>
+                    <p className="text-sm text-[hsl(var(--muted))] mt-1">You have {workspaces.length} workspace{workspaces.length !== 1 ? 's' : ''}</p>
                   </div>
                 </div>
 
@@ -372,45 +372,45 @@ export function AdminPanel() {
                       <div
                         key={workspace.id}
                         className={cn(
-                          "bg-white/5 border rounded-lg p-6 transition-all duration-200",
+                          "bg-[hsl(var(--bg-soft))/0.5] border rounded-lg p-6 transition-all duration-200",
                           isActive
                             ? "border-blue-500/50 bg-blue-500/5"
-                            : "border-white/10 hover:border-white/20"
+                            : "border-[hsl(var(--border))] hover:border-[hsl(var(--border))/0.8]"
                         )}
                       >
                         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                           <div className="lg:col-span-2 space-y-4">
                             <div>
                               <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-lg font-bold text-white">{workspace.name}</h3>
+                                <h3 className="text-lg font-bold text-[hsl(var(--text))]">{workspace.name}</h3>
                                 {isActive && (
                                   <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full border border-blue-500/50">
                                     Active
                                   </span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-400">{workspace.description || 'No description'}</p>
+                              <p className="text-sm text-[hsl(var(--muted))]">{workspace.description || 'No description'}</p>
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-[hsl(var(--muted))/0.7]">
                               <p>ID: {workspace.id}</p>
                               <p>Members: {workspace.memberIds.length}</p>
                             </div>
                           </div>
 
                           <div className="space-y-3">
-                            <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                              <p className="text-xs text-gray-400 mb-1">Projects</p>
-                              <p className="text-2xl font-bold text-white">{workspaceProjects.length}</p>
+                            <div className="bg-[hsl(var(--bg-soft))/0.5] rounded-lg p-3 border border-[hsl(var(--border))]">
+                              <p className="text-xs text-[hsl(var(--muted))] mb-1">Projects</p>
+                              <p className="text-2xl font-bold text-[hsl(var(--text))]">{workspaceProjects.length}</p>
                             </div>
-                            <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                              <p className="text-xs text-gray-400 mb-1">Tasks</p>
-                              <p className="text-2xl font-bold text-white">{workspaceTasks.length}</p>
+                            <div className="bg-[hsl(var(--bg-soft))/0.5] rounded-lg p-3 border border-[hsl(var(--border))]">
+                              <p className="text-xs text-[hsl(var(--muted))] mb-1">Tasks</p>
+                              <p className="text-2xl font-bold text-[hsl(var(--text))]">{workspaceTasks.length}</p>
                             </div>
                           </div>
 
-                            <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                              <p className="text-xs text-gray-400 mb-1">Members</p>
-                              <p className="text-2xl font-bold text-white">{workspace.memberIds.length}</p>
+                            <div className="bg-[hsl(var(--bg-soft))/0.5] rounded-lg p-3 border border-[hsl(var(--border))]">
+                              <p className="text-xs text-[hsl(var(--muted))] mb-1">Members</p>
+                              <p className="text-2xl font-bold text-[hsl(var(--text))]">{workspace.memberIds.length}</p>
                             </div>
                         </div>
                       </div>
@@ -419,24 +419,24 @@ export function AdminPanel() {
                 </div>
 
                 {activeWorkspace && (
-                  <div className="border-t border-white/10 pt-6">
-                    <h3 className="text-lg font-bold text-white mb-4">Active Workspace Settings</h3>
-                    <div className="bg-white/5 border border-white/10 rounded-lg p-6 space-y-4">
+                  <div className="border-t border-[hsl(var(--border))] pt-6">
+                    <h3 className="text-lg font-bold text-[hsl(var(--text))] mb-4">Active Workspace Settings</h3>
+                    <div className="bg-[hsl(var(--bg-soft))/0.5] border border-[hsl(var(--border))] rounded-lg p-6 space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Workspace Name</label>
+                        <label className="block text-sm font-medium text-[hsl(var(--text))/0.8] mb-2">Workspace Name</label>
                         <input 
                           defaultValue={activeWorkspace?.name}
                           onBlur={(e) => activeWorkspace && updateWorkspace(activeWorkspace.id, { name: e.target.value })}
-                          className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-2 bg-[hsl(var(--bg-soft))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text))] focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                        <label className="block text-sm font-medium text-[hsl(var(--text))/0.8] mb-2">Description</label>
                         <textarea 
                           defaultValue={activeWorkspace?.description}
                           onBlur={(e) => activeWorkspace && updateWorkspace(activeWorkspace.id, { description: e.target.value })}
                           rows={4}
-                          className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-2 bg-[hsl(var(--bg-soft))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text))] focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                     </div>
@@ -455,7 +455,7 @@ export function AdminPanel() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Projects Management</h2>
+                    <h2 className="text-3xl font-black text-[hsl(var(--text))] tracking-tighter uppercase">Projects Management</h2>
                     <p className="text-sm text-[hsl(var(--muted))] mt-1">Govern the workspace entities and their configurations.</p>
                   </div>
                   <button 
@@ -469,13 +469,13 @@ export function AdminPanel() {
 
                 <div className="grid gap-4">
                   {workspaceProjects.map(project => (
-                    <div key={project.id} className="group relative flex items-center justify-between rounded-[32px] border border-white/10 bg-white/5 p-6 transition-all hover:bg-white/[0.08] hover:border-white/20">
+                    <div key={project.id} className="group relative flex items-center justify-between rounded-[32px] border border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))/0.5] p-6 transition-all hover:bg-[hsl(var(--bg-soft))] hover:border-[hsl(var(--border))/0.8]">
                       <div className="flex items-center gap-6">
                         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(var(--accent))] to-[hsl(var(--accent)/0.5)] text-2xl font-black text-black shadow-lg">
                           {project.key}
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold text-white">{project.name}</h3>
+                          <h3 className="text-xl font-bold text-[hsl(var(--text))]">{project.name}</h3>
                           <div className="mt-2 flex items-center gap-4">
                             <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--muted))]">
                               <Layers3 className="h-3.5 w-3.5" />
@@ -496,7 +496,7 @@ export function AdminPanel() {
                             setActiveProject(project.id);
                             setActiveView('project-settings');
                           }}
-                          className="flex h-11 items-center gap-2 rounded-xl bg-white/5 px-5 text-xs font-black uppercase tracking-widest text-white transition hover:bg-white/10"
+                          className="flex h-11 items-center gap-2 rounded-xl bg-[hsl(var(--bg-soft))] px-5 text-xs font-black uppercase tracking-widest text-[hsl(var(--text))] transition hover:bg-[hsl(var(--bg-soft))/0.8]"
                         >
                           <Settings2 className="h-4 w-4" />
                           Configure
@@ -517,9 +517,9 @@ export function AdminPanel() {
                     </div>
                   ))}
                   {workspaceProjects.length === 0 && (
-                    <div className="rounded-[40px] border border-dashed border-white/10 bg-white/[0.02] py-24 text-center">
-                      <LayoutGrid className="mx-auto h-16 w-16 text-white/10" />
-                      <h3 className="mt-6 text-xl font-black text-white uppercase tracking-widest">Workspace Void</h3>
+                    <div className="rounded-[40px] border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))/0.2] py-24 text-center">
+                      <LayoutGrid className="mx-auto h-16 w-16 text-[hsl(var(--text))/0.1]" />
+                      <h3 className="mt-6 text-xl font-black text-[hsl(var(--text))] uppercase tracking-widest">Workspace Void</h3>
                       <p className="mt-2 text-sm text-[hsl(var(--muted))]">No project nodes have been initialized in this sector.</p>
                     </div>
                   )}
@@ -537,7 +537,7 @@ export function AdminPanel() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Subscription & Pulse</h2>
+                    <h2 className="text-3xl font-black text-[hsl(var(--text))] tracking-tighter uppercase">Subscription & Pulse</h2>
                     <p className="text-sm text-[hsl(var(--muted))] mt-1">Monitor resource allocation and system limits.</p>
                   </div>
                   <div className="flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-blue-400 border border-blue-500/20">
@@ -547,13 +547,13 @@ export function AdminPanel() {
                 </div>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-2 relative overflow-hidden rounded-[40px] border border-white/10 bg-gradient-to-br from-white/[0.05] to-transparent p-10 shadow-2xl">
+                  <div className="lg:col-span-2 relative overflow-hidden rounded-[40px] border border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))/0.3] p-10 shadow-2xl">
                     <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-500/10 blur-[100px]" />
                     
                     <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-8 cursor-pointer group" onClick={() => setActiveAdminTab('billing')}>
                       <div className="transition-transform group-hover:translate-x-1">
                         <span className="inline-block rounded-full bg-blue-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-black">Current Core</span>
-                        <h3 className="mt-4 text-5xl font-black text-white tracking-tighter">FREE PLAN</h3>
+                        <h3 className="mt-4 text-5xl font-black text-[hsl(var(--text))] tracking-tighter">FREE PLAN</h3>
                         <p className="mt-2 text-[hsl(var(--muted))]">Fundamental infrastructure for autonomous teams.</p>
                       </div>
                       <button 
@@ -568,7 +568,7 @@ export function AdminPanel() {
                             }
                           }, 300);
                         }}
-                        className="rounded-2xl bg-white px-8 py-4 text-sm font-black uppercase tracking-widest text-black transition hover:bg-[hsl(var(--accent))] hover:scale-105 active:scale-95 shadow-xl cursor-pointer"
+                        className="rounded-2xl bg-[hsl(var(--accent))] px-8 py-4 text-sm font-black uppercase tracking-widest text-black transition hover:opacity-90 hover:scale-105 active:scale-95 shadow-xl cursor-pointer"
                       >
                         Upgrade Core
                       </button>
@@ -594,7 +594,7 @@ export function AdminPanel() {
                                 <stat.icon className="h-3 w-3" />
                                 {stat.label}
                               </div>
-                              <span className="text-xs font-black text-white">{stat.current}/{stat.max}</span>
+                              <span className="text-xs font-black text-[hsl(var(--text))]">{stat.current}/{stat.max}</span>
                             </div>
                             <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
                               <motion.div 
@@ -618,14 +618,14 @@ export function AdminPanel() {
                       { label: 'API Stream', value: '1.2k', limit: '10k', icon: Activity, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
                       { label: 'Network Pulse', value: 'Optimal', limit: '99.9%', icon: Zap, color: 'text-amber-400', bg: 'bg-amber-400/10' },
                     ].map(metric => (
-                      <div key={metric.label} className="flex items-center gap-5 rounded-[32px] border border-white/10 bg-white/5 p-6 transition hover:bg-white/[0.08]">
+                      <div key={metric.label} className="flex items-center gap-5 rounded-[32px] border border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))/0.5] p-6 transition hover:bg-[hsl(var(--bg-soft))]">
                         <div className={cn("flex h-12 w-12 items-center justify-center rounded-2xl", metric.bg, metric.color)}>
                           <metric.icon className="h-6 w-6" />
                         </div>
                         <div>
                           <p className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--muted))]">{metric.label}</p>
                           <div className="mt-1 flex items-baseline gap-2">
-                            <span className="text-lg font-bold text-white">{metric.value}</span>
+                            <span className="text-lg font-bold text-[hsl(var(--text))]">{metric.value}</span>
                             <span className="text-[10px] font-bold text-[hsl(var(--muted))]">/ {metric.limit}</span>
                           </div>
                         </div>
@@ -637,7 +637,7 @@ export function AdminPanel() {
                 {/* Upgrade Options */}
                 <div id="pricing-plans" className="mt-12 space-y-6">
                   <div>
-                    <h3 className="text-2xl font-black text-white tracking-tighter uppercase mb-6">Upgrade Your Core</h3>
+                    <h3 className="text-2xl font-black text-[hsl(var(--text))] tracking-tighter uppercase mb-6">Upgrade Your Core</h3>
                     <p className="text-sm text-[hsl(var(--muted))] mb-8">Scale your team with enhanced limits and premium features.</p>
                   </div>
                   
@@ -742,8 +742,8 @@ export function AdminPanel() {
                 <h2 className="text-2xl font-bold text-red-500">Danger Zone</h2>
                 <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 space-y-4">
                   <div>
-                    <h3 className="font-bold text-white mb-2">Reset All Data</h3>
-                    <p className="text-sm text-gray-400 mb-4">This action cannot be undone. All workspace data will be permanently deleted.</p>
+                    <h3 className="font-bold text-[hsl(var(--text))] mb-2">Reset All Data</h3>
+                    <p className="text-sm text-[hsl(var(--muted))] mb-4">This action cannot be undone. All workspace data will be permanently deleted.</p>
                     <button 
                       onClick={() => setResetConfirmOpen(true)}
                       className="px-6 py-3 bg-red-600/10 border border-red-500/20 hover:bg-red-600 text-red-500 hover:text-white font-black uppercase tracking-widest text-xs rounded-2xl transition-all"
@@ -790,17 +790,19 @@ export function AdminPanel() {
 
       {confirmPlan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[hsl(var(--bg-elevated))] p-6 shadow-2xl">
-            <h3 className="text-xl font-black text-white uppercase tracking-wider">Confirm Purchase</h3>
+          <div className="w-full max-w-md rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-elevated))] p-6 shadow-2xl">
+            <h3 className="text-xl font-black text-[hsl(var(--text))] uppercase tracking-wider">Confirm Purchase</h3>
             <p className="mt-3 text-sm text-[hsl(var(--muted))]">
-              Confirm upgrade to <span className="font-bold text-white">{confirmPlan === 'pro' ? 'Pro' : 'Enterprise'}</span> plan for
-              <span className="font-bold text-white"> {confirmPlan === 'pro' ? '$99/month' : '$299/month'}</span>.
+              Confirm upgrade to <span className="font-bold text-[hsl(var(--text))]">{confirmPlan === 'pro' ? 'Pro' : 'Enterprise'}</span> plan for
+              <span className="font-bold text-[hsl(var(--text))]">
+                {confirmPlan === 'pro' ? '$99/month' : '$299/month'}
+              </span>.
             </p>
 
             <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setConfirmPlan(null)}
-                className="flex-1 rounded-xl border border-white/20 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10 transition"
+                className="flex-1 rounded-xl border border-[hsl(var(--border))] px-4 py-2.5 text-sm font-bold text-[hsl(var(--text))] hover:bg-[hsl(var(--bg-soft))] transition"
               >
                 Cancel
               </button>
