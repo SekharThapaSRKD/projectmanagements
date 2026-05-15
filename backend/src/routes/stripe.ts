@@ -99,26 +99,23 @@ export const registerStripeRoutes = async (
 
         let subscription = await mongoService.getSubscriptionByAccountId(userId);
 
-        // Create or update Stripe customer
+        // Create or reuse Stripe customer
         let stripeCustomerId = subscription?.stripeCustomerId;
 
         if (!stripeCustomerId) {
           const customer = await stripeService.createCustomer(userAccount.email, userAccount.name);
           stripeCustomerId = customer.id;
 
-          // Create subscription
-          const stripeSubscription = await stripeService.createSubscription(stripeCustomerId, plan.stripePriceId);
-
+          // Ensure a local subscription exists before checkout completion.
           if (!subscription) {
             subscription = await mongoService.createSubscription({
               id: `sub_${nanoid(12)}`,
               accountId: userId,
-              plan: planId as any,
-              status: 'active',
+              plan: 'free',
+              status: 'trial',
               stripeCustomerId,
-              stripeSubscriptionId: stripeSubscription.id,
-              currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-              currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+              currentPeriodStart: new Date(),
+              currentPeriodEnd: new Date(Date.now() + 24 * 60 * 60 * 1000),
               cancelAtPeriodEnd: false,
               createdAt: new Date(),
               updatedAt: new Date(),
@@ -126,31 +123,30 @@ export const registerStripeRoutes = async (
           } else {
             await mongoService.updateSubscription(subscription.id, {
               stripeCustomerId,
-              stripeSubscriptionId: stripeSubscription.id,
             });
           }
-        } else {
-          if (!subscription || !subscription.stripeSubscriptionId) {
-            return reply.status(400).send({ error: 'No active Stripe subscription' });
-          }
-
-          // Update existing subscription
-          const stripeSubscription = await stripeService.updateSubscription(
-            subscription.stripeSubscriptionId!,
-            plan.stripePriceId
-          );
-
-          await mongoService.updateSubscription(subscription.id, {
-            plan: planId as any,
-            currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-            currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
-          });
         }
+
+        const origin = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const successUrl = `${origin}/?checkout=success&plan=${planId}`;
+        const cancelUrl = `${origin}/?checkout=cancelled&plan=${planId}`;
+
+        const checkoutSession = await stripeService.createCheckoutSession({
+          customerId: stripeCustomerId,
+          successUrl,
+          cancelUrl,
+          priceId: plan.stripePriceId,
+          amountCents: plan.price,
+          planName: plan.name,
+          planId: planId as 'pro' | 'enterprise',
+          accountId: userId,
+        });
 
         return reply.send({
           success: true,
           planId,
-          subscription: await mongoService.getSubscriptionByAccountId(userId),
+          sessionId: checkoutSession.id,
+          checkoutUrl: checkoutSession.url,
         });
       } catch (error) {
         console.error('Checkout error:', error);
@@ -263,6 +259,49 @@ export const registerStripeRoutes = async (
       const event = stripeService.verifyWebhookSignature(rawBody, signature);
 
       switch (event.type) {
+        case 'checkout.session.completed': {
+          const session = event.data.object as any;
+          const customerId = session.customer as string;
+          const stripeSubscriptionId = session.subscription as string | undefined;
+          const planId = (session.metadata?.planId || 'free') as 'free' | 'pro' | 'enterprise';
+          const accountId = session.metadata?.accountId as string | undefined;
+
+          if (customerId && accountId) {
+            const existing = await mongoService.getSubscriptionByAccountId(accountId);
+            const now = new Date();
+            const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+            if (!existing) {
+              await mongoService.createSubscription({
+                id: `sub_${nanoid(12)}`,
+                accountId,
+                plan: planId,
+                status: 'active',
+                stripeCustomerId: customerId,
+                stripeSubscriptionId,
+                currentPeriodStart: now,
+                currentPeriodEnd: nextMonth,
+                cancelAtPeriodEnd: false,
+                createdAt: now,
+                updatedAt: now,
+              });
+            } else {
+              await mongoService.updateSubscription(existing.id, {
+                plan: planId,
+                status: 'active',
+                stripeCustomerId: customerId,
+                stripeSubscriptionId,
+                cancelAtPeriodEnd: false,
+              });
+            }
+
+            await mongoService.updateAccount(accountId, {
+              subscriptionTier: planId,
+            });
+          }
+          break;
+        }
+
         case 'customer.subscription.updated':
           const subscriptionUpdated = event.data.object as any;
           await mongoService.updateSubscriptionByCustomerId(subscriptionUpdated.customer, {

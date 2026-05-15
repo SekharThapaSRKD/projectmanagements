@@ -52,7 +52,7 @@ interface JiraBacklogProps {
   onTaskStatusChange: (taskId: string, status: string) => void;
   onCreateTask: (sprintId: string | null) => void;
   onCreateSprint?: (sprintName: string, startDate?: string, endDate?: string) => void;
-  onSprintAction?: (sprintId: string, action: 'start' | 'complete' | 'delete') => void;
+  onSprintAction?: (sprintId: string, action: 'start' | 'complete' | 'configure' | 'delete') => void;
 }
 
 /**
@@ -230,7 +230,7 @@ function SprintSection({
   onTaskDelete: (taskId: string) => void;
   onTaskStatusChange: (taskId: string, status: string) => void;
   onCreateTask: () => void;
-  onSprintAction?: (action: 'start' | 'complete' | 'delete') => void;
+  onSprintAction?: (action: 'start' | 'complete' | 'configure' | 'delete') => void;
 }) {
   const completedCount = tasks.filter(t => t.status === 'done').length;
   const totalPoints = tasks.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
@@ -242,14 +242,24 @@ function SprintSection({
     completed: 'bg-green-50/30 dark:bg-green-900/10'
   };
 
+  const [optionOpen, setOptionOpen] = useState(false);
+
   return (
     <div className={cn('rounded-lg border border-[hsl(var(--border))] overflow-hidden', sprintStatusColor[sprint.status])}>
       {/* Sprint Header - Non-button container for proper nesting */}
       <div className="flex items-center justify-between px-4 py-3 hover:bg-[hsl(var(--bg-soft))] transition-colors group">
         {/* Collapsible Section */}
-        <button
+        <div
+          role="button"
+          tabIndex={0}
           onClick={onToggleCollapse}
-          className="flex-1 flex items-center gap-3 text-left"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onToggleCollapse();
+            }
+          }}
+          className="flex-1 flex items-center gap-3 text-left cursor-pointer"
         >
           <ChevronDown
             className={cn(
@@ -261,50 +271,31 @@ function SprintSection({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-bold text-[hsl(var(--text))]">{sprint.name}</h3>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[hsl(var(--bg-soft))] text-[hsl(var(--text))]">
-                {sprint.status.toUpperCase()}
-              </span>
-              {sprint.status === 'planning' && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200 font-medium">
-                  Not on board yet
-                </span>
-              )}
-              {sprint.status === 'active' && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200 font-medium">
-                  On board
-                </span>
-              )}
+              <button className="flex items-center gap-1 text-xs text-[hsl(var(--muted))] hover:bg-[hsl(var(--bg-soft))] px-2 py-1 rounded transition-colors" onClick={(e) => { e.stopPropagation(); }}>
+                <Edit2 className="h-3 w-3" /> Add dates
+              </button>
+              <span className="text-xs text-[hsl(var(--muted))]">({tasks.length} work items)</span>
             </div>
-            {sprint.startDate && (
-              <p className="text-xs text-[hsl(var(--muted))] mt-1">
-                {sprint.startDate}
-                {sprint.endDate && ` – ${sprint.endDate}`}
-              </p>
-            )}
           </div>
 
           {/* Sprint Stats */}
-          <div className="shrink-0 flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1">
-              <span className="text-[hsl(var(--text))]">{completedCount}</span>
-              <span className="text-[hsl(var(--muted))]">/</span>
-              <span className="text-[hsl(var(--text))]">{tasks.length}</span>
-            </div>
-            <div className="flex items-center gap-1 bg-[hsl(var(--accent)/0.15)] text-[hsl(var(--accent))] px-2 py-1 rounded font-semibold">
-              {totalPoints || 0}
-            </div>
+          <div className="shrink-0 flex items-center gap-2 text-sm mr-2">
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-500 text-xs px-1.5 py-0.5 rounded font-semibold">0</div>
+            <div className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs px-1.5 py-0.5 rounded font-semibold">0</div>
+            <div className="flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs px-1.5 py-0.5 rounded font-semibold">0</div>
           </div>
-        </button>
+        </div>
 
         {/* Sprint Actions - Separate buttons */}
-        <div className="shrink-0 ml-2 flex items-center gap-2">
+        <div className="shrink-0 ml-2 flex items-center gap-2 relative">
           {sprint.status === 'planning' && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onSprintAction?.('start');
+                if (tasks.length > 0) onSprintAction?.('start');
               }}
-              className="px-3 py-1 bg-[hsl(var(--accent))] text-white text-xs font-semibold rounded hover:opacity-90 transition-opacity"
+              disabled={tasks.length === 0}
+              className="px-3 py-1.5 bg-[hsl(var(--bg-soft))] hover:bg-[hsl(var(--border))] text-[hsl(var(--text))] text-xs font-semibold rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Start sprint
             </button>
@@ -315,10 +306,34 @@ function SprintSection({
                 e.stopPropagation();
                 onSprintAction?.('complete');
               }}
-              className="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded hover:opacity-90 transition-opacity"
+              className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded hover:opacity-90 transition-opacity"
             >
               Complete sprint
             </button>
+          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); setOptionOpen(!optionOpen); }}
+            className="p-1.5 text-[hsl(var(--muted))] hover:bg-[hsl(var(--bg-soft))] rounded transition-colors"
+            title="More options"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+
+          {optionOpen && (
+            <div className="absolute right-0 top-full z-30 mt-2 w-44 rounded-lg border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] p-2 shadow-lg">
+              <button
+                onClick={() => { setOptionOpen(false); onSprintAction?.('configure'); }}
+                className="w-full text-left rounded-md px-3 py-2 text-sm hover:bg-[hsl(var(--bg-soft))]"
+              >
+                Configure
+              </button>
+              <button
+                onClick={() => { setOptionOpen(false); onSprintAction?.('delete'); }}
+                className="w-full text-left rounded-md px-3 py-2 text-sm text-red-500 hover:bg-[hsl(var(--bg-soft))]"
+              >
+                Delete
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -349,8 +364,8 @@ function SprintSection({
                   ))}
                 </SortableContext>
               ) : (
-                <div className="py-8 text-center text-[hsl(var(--muted))]">
-                  <p className="text-sm">No issues in this sprint</p>
+                <div className="py-4 rounded-lg border border-dashed border-[hsl(var(--border))] text-center text-[hsl(var(--muted))] bg-[hsl(var(--bg-soft))/0.3]">
+                  <p className="text-xs">Plan a sprint by dragging work items into it, or by dragging the sprint footer.</p>
                 </div>
               )}
 
@@ -381,7 +396,8 @@ function BacklogSection({
   onTaskClick,
   onTaskDelete,
   onTaskStatusChange,
-  onCreateTask
+  onCreateTask,
+  onCreateSprint
 }: {
   tasks: Task[];
   members: Array<{ id: string; name: string; avatar?: string }>;
@@ -391,16 +407,18 @@ function BacklogSection({
   onTaskDelete: (taskId: string) => void;
   onTaskStatusChange: (taskId: string, status: string) => void;
   onCreateTask: () => void;
+  onCreateSprint: () => void;
 }) {
   const taskIds = tasks.map(t => t.id);
 
   return (
     <div className="rounded-lg border border-[hsl(var(--border))] overflow-hidden">
       {/* Backlog Header - Future work always visible on board */}
-      <button
-        onClick={onToggleCollapse}
-        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[hsl(var(--bg-soft))] transition-colors text-left"
-      >
+      <div className="w-full flex items-center px-4 py-3 bg-[hsl(var(--bg-soft))] transition-colors text-left group">
+        <button
+          onClick={onToggleCollapse}
+          className="flex-1 flex items-center gap-3 text-left"
+        >
         <ChevronDown
           className={cn(
             'h-5 w-5 text-[hsl(var(--muted))] transition-transform',
@@ -408,15 +426,24 @@ function BacklogSection({
           )}
         />
 
-        <div className="flex-1">
+        <div className="flex-1 flex items-center gap-2">
           <h3 className="font-bold text-[hsl(var(--text))]">Backlog</h3>
-          <p className="text-xs text-[hsl(var(--muted))] mt-0.5">Future work • Always visible on board • Drag sprint tasks here</p>
+          <span className="text-xs text-[hsl(var(--muted))]">({tasks.length} work items)</span>
         </div>
 
-        <div className="shrink-0 text-sm font-semibold text-[hsl(var(--muted))]">
-          {tasks.length}
+        <div className="shrink-0 flex items-center gap-2 text-sm mr-2">
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-500 text-xs px-1.5 py-0.5 rounded font-semibold">0</div>
+          <div className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs px-1.5 py-0.5 rounded font-semibold">0</div>
+          <div className="flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs px-1.5 py-0.5 rounded font-semibold">0</div>
         </div>
-      </button>
+        </button>
+        <button 
+          onClick={onCreateSprint}
+          className="shrink-0 ml-4 px-3 py-1.5 bg-[hsl(var(--bg-soft))] hover:bg-[hsl(var(--border))] text-[hsl(var(--text))] text-xs font-semibold rounded transition-colors"
+        >
+          Create sprint
+        </button>
+      </div>
 
       {/* Backlog Tasks */}
       <AnimatePresence>
@@ -501,7 +528,7 @@ export function JiraStyleBacklog({
   }, [tasks, sprints]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { distance: 8 }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor)
   );
 
@@ -595,18 +622,9 @@ export function JiraStyleBacklog({
               onTaskDelete={onTaskDelete}
               onTaskStatusChange={onTaskStatusChange}
               onCreateTask={() => onCreateTask(sprint.id)}
-              onSprintAction={(action: 'start' | 'complete' | 'delete') => onSprintAction?.(sprint.id, action)}
+              onSprintAction={(action: 'start' | 'complete' | 'configure' | 'delete') => onSprintAction?.(sprint.id, action)}
             />
           ))}
-          
-          {/* Create Sprint Button */}
-          <button
-            onClick={() => setShowCreateSprintModal(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-[hsl(var(--muted))] hover:bg-[hsl(var(--bg-soft))] rounded-lg border border-dashed border-[hsl(var(--border))] transition-colors text-sm font-medium"
-          >
-            <Plus className="h-4 w-4" />
-            Create sprint
-          </button>
         </div>
 
         {/* Backlog */}
@@ -619,6 +637,7 @@ export function JiraStyleBacklog({
           onTaskDelete={onTaskDelete}
           onTaskStatusChange={onTaskStatusChange}
           onCreateTask={() => onCreateTask(null)}
+          onCreateSprint={() => setShowCreateSprintModal(true)}
         />
 
         {/* Create Sprint Modal */}

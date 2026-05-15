@@ -19,6 +19,7 @@ export const registerAuthRoutes = async (fastify: FastifyInstance, mongoService:
     name: account.name,
     avatar: account.avatar,
     role: account.role,
+    subscriptionTier: account.subscriptionTier || 'free',
     memberId: account.memberId,
   });
 
@@ -237,6 +238,35 @@ export const registerAuthRoutes = async (fastify: FastifyInstance, mongoService:
     }
   );
 
+  fastify.delete<{ Body: { password: string } }>(
+    '/api/v1/account',
+    { onRequest: [(fastify as any).authenticate] },
+    async (request, reply) => {
+      const { password } = request.body;
+      const authUser = request.user as { id: string } | undefined;
+
+      if (!authUser?.id || !password) {
+        return reply.status(400).send({ error: 'Password is required for account deletion' });
+      }
+
+      const account = await mongoService.findAccountById(authUser.id);
+      if (!account?.passwordHash) {
+        return reply.status(404).send({ error: 'Account not found' });
+      }
+
+      // Verify password before allowing deletion
+      const ok = await bcryptjs.compare(password, account.passwordHash);
+      if (!ok) {
+        return reply.status(401).send({ error: 'Password confirmation failed' });
+      }
+
+      // Delete the account and all associated data
+      await mongoService.deleteAccount(account.id);
+
+      return reply.send({ message: 'Account deleted successfully' });
+    }
+  );
+
   fastify.post<{ Body: { email: string; password: string; name: string } }>(
     '/api/v1/auth/register',
     async (request, reply) => {
@@ -263,6 +293,7 @@ export const registerAuthRoutes = async (fastify: FastifyInstance, mongoService:
         passwordHash,
         provider: 'email',
         role: 'member',
+        subscriptionTier: 'free',
         avatar: name.substring(0, 2).toUpperCase(),
         memberId,
         createdAt: new Date(),
@@ -316,14 +347,7 @@ export const registerAuthRoutes = async (fastify: FastifyInstance, mongoService:
 
       return reply.status(201).send({
         token,
-        user: {
-          id: newAccount.id,
-          email: newAccount.email,
-          name: newAccount.name,
-          avatar: newAccount.avatar,
-          role: newAccount.role,
-          memberId: newAccount.memberId,
-        },
+        user: buildUser(newAccount),
       });
     }
   );
@@ -378,6 +402,7 @@ export const registerAuthRoutes = async (fastify: FastifyInstance, mongoService:
             provider: 'google',
             providerId: profile.id,
             role: 'member',
+            subscriptionTier: 'free',
             avatar: profile.avatar || profile.name.substring(0, 2).toUpperCase(),
             memberId,
             createdAt: new Date(),
@@ -430,14 +455,7 @@ export const registerAuthRoutes = async (fastify: FastifyInstance, mongoService:
           { expiresIn: '30d' }
         );
 
-        const user = JSON.stringify({
-          id: account.id,
-          email: account.email,
-          name: account.name,
-          avatar: account.avatar,
-          role: account.role,
-          memberId: account.memberId,
-        });
+        const user = JSON.stringify(buildUser(account));
 
         return reply.redirect(
           `${env.FRONTEND_URL}/login?token=${encodeURIComponent(token)}&user=${encodeURIComponent(user)}`
@@ -499,6 +517,7 @@ export const registerAuthRoutes = async (fastify: FastifyInstance, mongoService:
             provider: 'github',
             providerId: profile.id,
             role: 'member',
+            subscriptionTier: 'free',
             avatar: profile.avatar || profile.name.substring(0, 2).toUpperCase(),
             memberId,
             createdAt: new Date(),
@@ -551,14 +570,7 @@ export const registerAuthRoutes = async (fastify: FastifyInstance, mongoService:
           { expiresIn: '30d' }
         );
 
-        const user = JSON.stringify({
-          id: account.id,
-          email: account.email,
-          name: account.name,
-          avatar: account.avatar,
-          role: account.role,
-          memberId: account.memberId,
-        });
+        const user = JSON.stringify(buildUser(account));
 
         return reply.redirect(
           `${env.FRONTEND_URL}/login?token=${encodeURIComponent(token)}&user=${encodeURIComponent(user)}`
@@ -592,6 +604,7 @@ export const registerAuthRoutes = async (fastify: FastifyInstance, mongoService:
         name: account.name,
         avatar: account.avatar,
         role: account.role,
+        subscriptionTier: account.subscriptionTier || 'free',
         memberId: account.memberId,
       });
     } catch (error) {

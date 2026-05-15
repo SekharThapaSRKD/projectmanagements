@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { demoData } from './sample-data';
 import {
   addTaskComment,
   createTeamFlowResource,
@@ -104,6 +103,13 @@ export interface Toast {
   title: string;
   description?: string;
   type: 'success' | 'error' | 'info';
+  actions?: Array<{
+    label: string;
+    onClick?: () => void;
+    variant?: 'default' | 'secondary' | 'destructive';
+    keepOpen?: boolean;
+  }>;
+  durationMs?: number;
 }
 
 interface AppState extends SeedData {
@@ -142,10 +148,13 @@ interface AppState extends SeedData {
   removeToast: (id: string) => void;
   addSprint: (input: NewSprintInput) => string;
   updateSprint: (sprintId: string, patch: Partial<Sprint>) => void;
+  deleteSprint: (sprintId: string) => void;
+  deleteSprintWithTasks: (sprintId: string) => void;
   startSprint: (sprintId: string) => void;
   completeSprint: (sprintId: string) => void;
   addTaskToSprint: (taskId: string, sprintId: string) => void;
   removeTaskFromSprint: (taskId: string) => void;
+  addChannel: (name: string, projectId?: string) => string;
   sendMessage: (content: string, channelId?: string, senderId?: string, voiceUrl?: string, duration?: number, attachments?: Array<{ id: string; name: string; url: string; size: number; type: string }>) => void;
   addMeeting: (input: NewMeetingInput) => string;
   updateMeeting: (meetingId: string, patch: Partial<Meeting>) => void;
@@ -160,7 +169,7 @@ interface AppState extends SeedData {
   hydrateFromBackend: () => Promise<void>;
   hydrateMessages: (channelId: string) => Promise<void>;
   startRealtimeSync: () => () => void;
-  resetDemoData: () => void;
+  resetAppData: () => void;
   resetAllData: () => void;
 }
 
@@ -204,6 +213,24 @@ const createProjectColumns = (type: ProjectType) =>
         { id: 'done' as const, title: 'Done' }
       ];
 
+  const createEmptySeedData = (): SeedData => ({
+    workspaces: [],
+    projects: [],
+    sprints: [],
+    tasks: [],
+    members: [],
+    meetings: [],
+    messages: [],
+    notifications: [],
+    documents: [],
+    boards: [],
+    channels: [],
+    activeWorkspaceId: '',
+    activeProjectId: '',
+    activeSprintId: null,
+    activeView: 'dashboard'
+  });
+
 const mergeBootstrapState = (state: SeedData, bootstrap: Partial<SeedData>) => ({
   ...state,
   workspaces: bootstrap.workspaces ?? state.workspaces,
@@ -236,10 +263,10 @@ const syncIfReal = async <T>(work: () => Promise<T>) => {
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
-      ...demoData,
+      ...createEmptySeedData(),
       sidebarOpen: true,
       chatOpen: true,
-      activeChannelId: 'channel_launchpad',
+      activeChannelId: '',
       toasts: [],
       setActiveWorkspace: workspaceId => {
         set(state => {
@@ -436,9 +463,19 @@ export const useAppStore = create<AppState>()(
         }
 
         const nextMemberIds = [...project.memberIds, memberId];
+        const projectChannel: Channel = {
+          id: makeId('channel'),
+          name: `#${project.key.replace(/[^a-z0-9]+/gi, '').toLowerCase()}`,
+          type: 'project',
+          relatedId: project.id
+        };
+
         set(state => ({
           projects: state.projects.map(p => p.id === project.id ? { ...p, memberIds: nextMemberIds } : p),
+          channels: [projectChannel, ...state.channels.filter(c => !(c.type === 'project' && c.relatedId === project.id))],
+          activeWorkspaceId: project.workspaceId ?? state.activeWorkspaceId,
           activeProjectId: project.id,
+          activeChannelId: projectChannel.id,
           activeView: 'board'
         }));
         
@@ -493,10 +530,12 @@ export const useAppStore = create<AppState>()(
         set(state => ({
           toasts: [...state.toasts, { ...toast, id }]
         }));
-        // Auto remove after 3s
-        setTimeout(() => {
-          get().removeToast(id);
-        }, 3000);
+        const timeout = toast.durationMs ?? (toast.actions?.length ? 8000 : 3000);
+        if (timeout > 0) {
+          setTimeout(() => {
+            get().removeToast(id);
+          }, timeout);
+        }
       },
       removeToast: (id) => {
         set(state => ({
@@ -541,7 +580,7 @@ export const useAppStore = create<AppState>()(
           projectId: input.projectId ?? get().activeProjectId,
           startDate: input.startDate,
           endDate: input.endDate,
-          status: 'planned',
+          status: 'planning',
           goal: input.goal
         };
 
@@ -608,6 +647,63 @@ export const useAppStore = create<AppState>()(
             tasks: state.tasks.map(current => (current.id === taskId ? { ...current, sprintId: null, updatedAt: new Date().toISOString() } : current))
           };
         }),
+      deleteSprint: sprintId =>
+        set(state => {
+          const sprint = state.sprints.find(item => item.id === sprintId);
+          if (sprint) {
+            void syncIfReal(() => deleteTeamFlowResource('sprints', sprintId));
+          }
+
+          return {
+            sprints: state.sprints.filter(s => s.id !== sprintId),
+            tasks: state.tasks.map(t => (t.sprintId === sprintId ? { ...t, sprintId: null, updatedAt: new Date().toISOString() } : t)),
+            activeSprintId: state.activeSprintId === sprintId ? null : state.activeSprintId
+          };
+        }),
+          deleteSprintWithTasks: sprintId =>
+            set(state => {
+              const sprint = state.sprints.find(item => item.id === sprintId);
+              if (sprint) {
+                void syncIfReal(async () => {
+                  // delete sprint on backend
+                  await deleteTeamFlowResource('sprints', sprintId);
+                  // delete tasks that belonged to this sprint
+                  const sprintTasks = state.tasks.filter(t => t.sprintId === sprintId);
+                  for (const t of sprintTasks) {
+                    try {
+                      await deleteTeamFlowResource('tasks', t.id);
+                    } catch {
+                      // ignore individual failures
+                    }
+                  }
+                });
+              }
+
+              return {
+                sprints: state.sprints.filter(s => s.id !== sprintId),
+                tasks: state.tasks.filter(t => t.sprintId !== sprintId),
+                activeSprintId: state.activeSprintId === sprintId ? null : state.activeSprintId
+              };
+            }),
+      addChannel: (name, projectId) => {
+        const pId = projectId ?? get().activeProjectId;
+        if (!pId) throw new Error('No project selected');
+        
+        const channel: Channel = {
+          id: makeId('channel'),
+          name: `#${name.replace(/[^a-z0-9]+/gi, '').toLowerCase()}`,
+          type: 'project',
+          relatedId: pId
+        };
+        
+        set(state => ({
+          channels: [channel, ...state.channels],
+          activeChannelId: channel.id
+        }));
+        
+        void syncIfReal(() => createTeamFlowResource('channels', channel));
+        return channel.id;
+      },
       sendMessage: (content, channelId = get().activeChannelId, senderId = 'mem_olivia', voiceUrl, duration, attachments) =>
         set(state => {
           const message: Message = {
@@ -854,12 +950,12 @@ export const useAppStore = create<AppState>()(
       },      startRealtimeSync: () => subscribeToTeamFlowInvalidations(() => {
         void get().hydrateFromBackend();
       }),
-      resetDemoData: () =>
+      resetAppData: () =>
         set(() => ({
-          ...demoData,
+          ...createEmptySeedData(),
           sidebarOpen: true,
           chatOpen: true,
-          activeChannelId: 'channel_launchpad'
+          activeChannelId: ''
         })),
       resetAllData: () => {
         localStorage.removeItem('teamflow-storage');

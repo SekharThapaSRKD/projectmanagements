@@ -8,6 +8,7 @@ export interface Account {
   provider: 'email' | 'google' | 'github' | 'apple';
   providerId?: string;
   role: 'owner' | 'admin' | 'member';
+  subscriptionTier?: 'free' | 'pro' | 'enterprise';
   avatar: string;
   passwordHash?: string;
   twoFactorEnabled?: boolean;
@@ -146,9 +147,17 @@ export interface Channel {
   projectId?: string;
   name: string;
   type: 'workspace' | 'project';
+  description?: string;
+  isPrivate?: boolean;
   memberIds: string[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface MessageReaction {
+  emoji: string;
+  userIds: string[];
+  count: number;
 }
 
 export interface Message {
@@ -157,9 +166,45 @@ export interface Message {
   channelId: string;
   senderId: string;
   content: string;
-  attachments?: string[];
+  threadParentId?: string | null;
+  attachments?: {
+    id: string;
+    name: string;
+    url: string;
+    size: number;
+    type: string;
+  }[];
+  reactions?: MessageReaction[];
+  mentions?: string[];
+  readBy?: string[];
+  pinned?: boolean;
+  editedAt?: Date | null;
+  deletedAt?: Date | null;
+  voiceUrl?: string;
+  duration?: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface DirectMessageRoom {
+  _id?: ObjectId;
+  id: string;
+  memberIds: string[];
+  lastMessageId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface FileAttachment {
+  _id?: ObjectId;
+  id: string;
+  messageId?: string;
+  name: string;
+  url: string;
+  size: number;
+  mimeType: string;
+  uploadedBy: string;
+  createdAt: Date;
 }
 
 export interface DocumentFile {

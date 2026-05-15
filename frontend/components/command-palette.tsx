@@ -124,7 +124,7 @@ export function CommandPalette() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-start justify-center pt-[12vh]">
+        <div className="fixed inset-0 z-[2000] flex items-start justify-center px-3 pt-[10vh] sm:px-4 sm:pt-[12vh]">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -137,16 +137,16 @@ export function CommandPalette() {
             initial={{ opacity: 0, scale: 0.98, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98, y: -10 }}
-            className="relative w-full max-w-2xl overflow-hidden rounded-[32px] border border-white/10 bg-[#0A0A0A]/90 shadow-[0_32px_128px_rgba(0,0,0,0.8)] backdrop-blur-3xl"
+            className="relative w-full max-w-2xl overflow-hidden rounded-[22px] border border-white/10 bg-[#0A0A0A]/90 shadow-[0_32px_128px_rgba(0,0,0,0.8)] backdrop-blur-3xl sm:rounded-[32px]"
           >
-            <div className="flex items-center border-b border-white/5 px-6 py-5">
+            <div className="flex items-center border-b border-white/5 px-4 py-4 sm:px-6 sm:py-5">
               <Search className="mr-4 h-5 w-5 text-[hsl(var(--accent))]" />
               <input
                 ref={inputRef}
                 autoFocus
                 onKeyDown={handleKeyDown}
                 placeholder="Search projects, tasks, or type '>' for commands..."
-                className="flex-1 bg-transparent text-xl font-medium text-white outline-none placeholder:text-white/20"
+                className="flex-1 bg-transparent text-base font-medium text-white outline-none placeholder:text-white/20 sm:text-xl"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -155,7 +155,7 @@ export function CommandPalette() {
               </div>
             </div>
 
-            <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <div className="max-h-[70dvh] overflow-y-auto custom-scrollbar sm:max-h-[60vh]">
               {filteredItems.length > 0 ? (
                 <div className="p-3">
                   {Array.from(new Set(filteredItems.map(i => i.category))).map(category => (

@@ -93,7 +93,7 @@ export const registerBootstrapRoutes = async (fastify: FastifyInstance, mongoSer
 
         const workspaceMemberIds = Array.isArray(activeWorkspace.memberIds) ? activeWorkspace.memberIds : [];
 
-        const firstSprint = sprints[0];
+        const activeSprint = sprints.find(s => s.status === 'active');
         return reply.send({
           workspaces: userWorkspaces,
           projects,
@@ -105,7 +105,7 @@ export const registerBootstrapRoutes = async (fastify: FastifyInstance, mongoSer
           channels,
           activeWorkspaceId: workspaceId,
           activeProjectId,
-          activeSprintId: firstSprint ? firstSprint.id : null,
+          activeSprintId: activeSprint ? activeSprint.id : null,
           activeView: 'board',
         });
       } catch (error: any) {

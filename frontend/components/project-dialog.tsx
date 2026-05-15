@@ -102,8 +102,8 @@ export function ProjectDialog({ isOpen, onClose }: ProjectDialogProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="glass-panel soft-border w-full max-w-md rounded-3xl p-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 sm:items-center sm:p-4">
+      <div className="glass-panel soft-border w-full max-w-md rounded-[24px] p-5 sm:rounded-3xl sm:p-6">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-white">Create Project</h2>
           <button
@@ -121,7 +121,7 @@ export function ProjectDialog({ isOpen, onClose }: ProjectDialogProps) {
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-600/20 to-purple-600/20 p-6 text-center shadow-xl"
+              className="relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-600/20 to-purple-600/20 p-5 text-center shadow-xl sm:p-6"
             >
               <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl" />
               <div className="absolute -left-4 -bottom-4 h-24 w-24 rounded-full bg-purple-500/10 blur-2xl" />

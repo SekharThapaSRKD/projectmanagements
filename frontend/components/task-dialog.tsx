@@ -119,11 +119,11 @@ export function TaskDialog({ task, isNew, onClose }: TaskDialogProps) {
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="relative flex h-full max-h-[850px] w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] shadow-2xl"
+        className="relative flex h-full max-h-[92dvh] w-full max-w-6xl flex-col overflow-hidden rounded-[24px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] shadow-2xl md:rounded-[32px]"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-panel)/0.5)] px-8 py-5">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-4 border-b border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-panel)/0.5)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5">
+           <div className="flex min-w-0 items-center gap-4">
              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(var(--accent)/0.1)] text-[hsl(var(--accent))]">
                 <Layers className="h-5 w-5" />
              </div>
@@ -262,7 +262,7 @@ export function TaskDialog({ task, isNew, onClose }: TaskDialogProps) {
             </div>
 
             {/* Sidebar Info Area */}
-            <div className="space-y-6 bg-[hsl(var(--bg-panel)/0.3)] p-8">
+            <div className="space-y-6 bg-[hsl(var(--bg-panel)/0.3)] p-4 sm:p-8">
                {/* Status & Priority */}
                <div className="grid gap-4">
                   <div className="space-y-2">
@@ -358,11 +358,11 @@ export function TaskDialog({ task, isNew, onClose }: TaskDialogProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-panel)/0.5)] px-8 py-5">
+        <div className="flex flex-col gap-3 border-t border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-panel)/0.5)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5">
            <button type="button" onClick={() => setIsDeleteDialogOpen(true)} className="flex h-11 items-center gap-2 rounded-2xl border border-[hsl(var(--danger))/0.2] bg-[hsl(var(--danger)/0.05)] px-5 text-sm font-bold text-[hsl(var(--danger))] transition-all hover:bg-[hsl(var(--danger)/0.1)]">
              <Trash2 className="h-4 w-4" /> Delete Task
            </button>
-           <div className="flex items-center gap-4">
+           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
              <button type="button" onClick={onClose} className="rounded-2xl border border-[hsl(var(--border))] px-6 py-3 text-sm font-bold text-[hsl(var(--muted))] transition-all hover:text-[hsl(var(--text))] hover:bg-[hsl(var(--bg-soft))]">Cancel</button>
              <button type="button" onClick={saveTask} className="inline-flex items-center gap-2 rounded-2xl bg-[hsl(var(--accent))] px-8 py-3 text-sm font-bold text-black shadow-lg shadow-[hsl(var(--accent)/0.2)] transition-all hover:opacity-90 hover:scale-105 active:scale-95">
                <CheckCircle2 className="h-4 w-4" /> {isNew ? 'Create Requirement' : 'Save Modifications'}

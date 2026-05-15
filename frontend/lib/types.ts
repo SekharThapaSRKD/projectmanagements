@@ -10,7 +10,7 @@ export type TaskType = (typeof taskTypes)[number];
 export const projectTypes = ['kanban', 'scrum'] as const;
 export type ProjectType = (typeof projectTypes)[number];
 
-export const sprintStatuses = ['planned', 'active', 'completed'] as const;
+export const sprintStatuses = ['planning', 'active', 'completed'] as const;
 export type SprintStatus = (typeof sprintStatuses)[number];
 
 export const memberRoles = ['owner', 'admin', 'manager', 'developer', 'viewer'] as const;
@@ -188,7 +188,19 @@ export interface Message {
   content: string;
   senderId: string;
   channelId: string;
+  threadParentId?: string | null;
+  mentions?: string[];
+  readBy?: string[];
+  pinned?: boolean;
+  reactions?: {
+    emoji: string;
+    userIds: string[];
+    count: number;
+  }[];
+  editedAt?: string | null;
+  deletedAt?: string | null;
   createdAt: string;
+  updatedAt?: string;
   voiceUrl?: string;
   duration?: number;
   attachments?: {
@@ -222,6 +234,29 @@ export interface Channel {
   name: string;
   type: ChannelType;
   relatedId: string;
+  description?: string;
+  isPrivate?: boolean;
+  memberIds?: string[];
+  lastMessageAt?: string;
+}
+
+export interface DirectMessageRoom {
+  id: string;
+  memberIds: string[];
+  lastMessageId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FileAttachment {
+  id: string;
+  messageId?: string;
+  name: string;
+  url: string;
+  size: number;
+  mimeType: string;
+  uploadedBy: string;
+  createdAt: string;
 }
 
 export type NotificationType = 'task_assigned' | 'project_update' | 'mention' | 'system';

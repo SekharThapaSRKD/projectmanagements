@@ -7,6 +7,18 @@ import { useAppStore } from '@/lib/store';
 export function Toaster() {
   const { toasts, removeToast } = useAppStore();
 
+  const actionClass = (variant?: 'default' | 'secondary' | 'destructive') => {
+    if (variant === 'destructive') {
+      return 'border-red-500/40 bg-red-500/20 text-red-200 hover:bg-red-500/30';
+    }
+
+    if (variant === 'secondary') {
+      return 'border-white/15 bg-white/5 text-[hsl(var(--muted))] hover:bg-white/10 hover:text-white';
+    }
+
+    return 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25';
+  };
+
   return (
     <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
       <AnimatePresence>
@@ -28,6 +40,24 @@ export function Toaster() {
               <h3 className="text-sm font-bold text-white">{toast.title}</h3>
               {toast.description && (
                 <p className="mt-1 text-xs text-[hsl(var(--muted))]">{toast.description}</p>
+              )}
+              {toast.actions && toast.actions.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {toast.actions.map((action, idx) => (
+                    <button
+                      key={`${toast.id}-action-${idx}`}
+                      onClick={() => {
+                        action.onClick?.();
+                        if (!action.keepOpen) {
+                          removeToast(toast.id);
+                        }
+                      }}
+                      className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${actionClass(action.variant)}`}
+                    >
+                      {action.label}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
             <button

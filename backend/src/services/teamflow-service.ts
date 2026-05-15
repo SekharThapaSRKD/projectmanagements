@@ -1387,7 +1387,12 @@ export class TeamFlowService {
       content: input.content.trim(),
       senderId,
       channelId,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      attachments: [],
+      reactions: [],
+      mentions: [],
+      readBy: [senderId]
     };
 
     await this.store.update(current => {

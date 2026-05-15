@@ -71,7 +71,7 @@ function CustomBoardColumn({
   return (
     <div
       ref={setNodeRef}
-      className="flex flex-col rounded-xl border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-input))] p-4 min-w-[320px] max-h-[600px] overflow-hidden flex-shrink-0"
+      className="flex flex-col rounded-xl border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-input))] p-4 w-full min-w-[280px] sm:min-w-[320px] max-h-[600px] overflow-hidden flex-shrink-0"
     >
       {/* Column Header */}
       <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[hsl(var(--border-soft))]">
@@ -191,7 +191,7 @@ export function CustomBoardView({
         collisionDetection={closestCorners}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none">
           {board.columns.map(column => (
             <CustomBoardColumn
               key={column.id}

@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   Settings,
   Lock,
-  Zap
+  Zap,
+  Palette
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/lib/auth-store';
@@ -25,6 +26,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { uploadAvatar } from '@/lib/teamflow-api';
 import { getTwoFactorStatus } from '@/lib/auth-bridge';
+import { applyStylePreset, getStoredStylePreset, saveStylePreset, type StylePreset } from '@/lib/style-preset';
 
 type TabType = 'profile' | 'notifications' | 'account' | 'workspace';
 
@@ -33,6 +35,7 @@ export function SettingsView() {
   const logout = useAuthStore(state => state.logout);
   const changePassword = useAuthStore(state => state.changePassword);
   const setTwoFactorEnabledAction = useAuthStore(state => state.setTwoFactorEnabled);
+  const deleteAccountAction = useAuthStore(state => state.deleteAccount);
   const { addNotification } = useAppStore();
   const { t, locale, setLocale } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('profile');
@@ -46,12 +49,15 @@ export function SettingsView() {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [twoFactorPassword, setTwoFactorPassword] = useState('');
   const [securityBusy, setSecurityBusy] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Notification toggles state
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [tasksEnabled, setTasksEnabled] = useState(true);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [stylePreset, setStylePreset] = useState<StylePreset>('classic');
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -102,13 +108,34 @@ export function SettingsView() {
     });
   };
 
-  const handleDeleteAccount = () => {
-    if (confirm('Are you absolutely sure? This action cannot be undone.')) {
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      addNotification({ type: 'system', title: 'Validation Error', message: 'Enter your password to confirm deletion.' });
+      return;
+    }
+
+    setSecurityBusy(true);
+    try {
+      await deleteAccountAction(deletePassword);
       addNotification({
         type: 'system',
-        title: 'Account Deletion',
-        message: 'Request submitted. Your account will be deleted within 24 hours.'
+        title: 'Account Deleted',
+        message: 'Your account has been permanently deleted. You will be logged out shortly.'
       });
+      // Delay logout to show notification
+      setTimeout(() => {
+        logout();
+      }, 1500);
+    } catch (error) {
+      addNotification({
+        type: 'system',
+        title: 'Deletion Failed',
+        message: error instanceof Error ? error.message : 'Unable to delete account. Please check your password.'
+      });
+    } finally {
+      setSecurityBusy(false);
+      setDeletePassword('');
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -121,6 +148,11 @@ export function SettingsView() {
       .then(result => setTwoFactorEnabled(result.twoFactorEnabled))
       .catch(() => setTwoFactorEnabled(false));
   }, [activeTab, user]);
+
+  useEffect(() => {
+    const preset = getStoredStylePreset();
+    setStylePreset(preset);
+  }, []);
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword) {
@@ -205,7 +237,7 @@ export function SettingsView() {
         </button>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+      <div className="grid gap-6 xl:grid-cols-[280px_1fr]">
         {/* Navigation Sidebar */}
         <aside className="flex flex-col gap-2">
           {tabs.map((tab) => (
@@ -228,7 +260,7 @@ export function SettingsView() {
         </aside>
 
         {/* Content Area */}
-        <main className="min-h-[600px] overflow-hidden rounded-[32px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] p-1">
+        <main className="min-h-[50vh] overflow-hidden rounded-[24px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] p-1 md:min-h-[600px] md:rounded-[32px]">
           <AnimatePresence mode="wait">
             {activeTab === 'profile' && (
               <motion.div
@@ -431,18 +463,66 @@ export function SettingsView() {
                     <p className="mt-2 text-sm text-[hsl(var(--text))] opacity-80">These actions are permanent and cannot be undone. Proceed with caution.</p>
   
                     <div className="mt-6 space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-[hsl(var(--danger))/0.2] bg-[hsl(var(--bg-elevated))] p-5 shadow-sm">
-                        <div>
-                          <p className="font-bold text-[hsl(var(--text))]">Delete Account</p>
-                          <p className="text-xs text-[hsl(var(--muted))] mt-1">Permanently remove your account and erase all associated data.</p>
+                      {!showDeleteConfirm ? (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-[hsl(var(--danger))/0.2] bg-[hsl(var(--bg-elevated))] p-5 shadow-sm">
+                          <div>
+                            <p className="font-bold text-[hsl(var(--text))]">Delete Account</p>
+                            <p className="text-xs text-[hsl(var(--muted))] mt-1">Permanently remove your account and erase all associated data.</p>
+                          </div>
+                          <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="shrink-0 rounded-xl bg-[hsl(var(--danger))] px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-[hsl(var(--danger)/0.2)] transition hover:opacity-90 active:scale-95 disabled:opacity-60"
+                            disabled={securityBusy}
+                          >
+                            Delete Account
+                          </button>
                         </div>
-                        <button
-                          onClick={handleDeleteAccount}
-                          className="shrink-0 rounded-xl bg-[hsl(var(--danger))] px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-[hsl(var(--danger)/0.2)] transition hover:opacity-90 active:scale-95"
-                        >
-                          Delete Account
-                        </button>
-                      </div>
+                      ) : (
+                        <div className="rounded-2xl border border-[hsl(var(--danger))/0.3] bg-[hsl(var(--danger)/0.05)] p-6 space-y-4">
+                          <div>
+                            <p className="font-bold text-[hsl(var(--danger))] text-lg mb-4">⚠️ Confirm Account Deletion</p>
+                            <p className="text-sm text-[hsl(var(--text))] mb-4">This action cannot be undone. All your data will be permanently deleted, including:</p>
+                            <ul className="text-xs text-[hsl(var(--muted))] space-y-1 mb-6 ml-4">
+                              <li>• All workspaces and projects</li>
+                              <li>• All tasks and documents</li>
+                              <li>• All team memberships</li>
+                              <li>• All account settings</li>
+                            </ul>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted))]">
+                              Enter your password to confirm
+                            </label>
+                            <input
+                              type="password"
+                              value={deletePassword}
+                              onChange={(e) => setDeletePassword(e.target.value)}
+                              placeholder="Your password"
+                              className="w-full rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-panel))] px-4 py-3 text-sm outline-none focus:border-[hsl(var(--danger))/0.5]"
+                              disabled={securityBusy}
+                            />
+                          </div>
+                          <div className="flex gap-3 pt-4 border-t border-[hsl(var(--danger))/0.2)]">
+                            <button
+                              onClick={() => {
+                                setShowDeleteConfirm(false);
+                                setDeletePassword('');
+                              }}
+                              className="flex-1 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-elevated))] px-4 py-3 text-sm font-bold text-[hsl(var(--text))] transition hover:bg-[hsl(var(--bg-panel))] disabled:opacity-60"
+                              disabled={securityBusy}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleDeleteAccount}
+                              className="flex-1 rounded-2xl bg-[hsl(var(--danger))] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-[hsl(var(--danger)/0.2)] transition hover:opacity-90 active:scale-95 disabled:opacity-60"
+                              disabled={securityBusy || !deletePassword}
+                            >
+                              {securityBusy ? 'Deleting...' : 'Permanently Delete'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -459,11 +539,66 @@ export function SettingsView() {
                 className="h-full rounded-[28px] bg-[hsl(var(--bg-panel)/0.4)] p-8"
               >
                 <div className="mb-10">
-                  <h2 className="text-2xl font-bold text-[hsl(var(--text))]">Regional Preferences</h2>
-                  <p className="text-sm text-[hsl(var(--muted))] mt-1">Configure language and timezone settings for your global account.</p>
+                  <h2 className="text-2xl font-bold text-[hsl(var(--text))]">Workspace Preferences</h2>
+                  <p className="text-sm text-[hsl(var(--muted))] mt-1">Configure app style and language preferences for your account.</p>
                 </div>
 
                 <div className="space-y-6">
+                   <div className="space-y-3">
+                      <label className="text-xs font-black uppercase tracking-[0.2em] text-[hsl(var(--muted))] px-2">Visual Style Presets</label>
+                      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+                        {[
+                          {
+                            id: 'classic' as const,
+                            name: 'Classic PM',
+                            description: 'Balanced blue workspace for daily team operations.'
+                          },
+                          {
+                            id: 'graphite' as const,
+                            name: 'Graphite Ops',
+                            description: 'Neutral, high-focus interface with reduced color noise.'
+                          },
+                          {
+                            id: 'focus' as const,
+                            name: 'Focus Green',
+                            description: 'Action-driven style optimized for throughput and execution.'
+                          }
+                        ].map(preset => (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => {
+                              setStylePreset(preset.id);
+                              applyStylePreset(preset.id);
+                              saveStylePreset(preset.id);
+                              addNotification({
+                                type: 'system',
+                                title: 'Style Preset Applied',
+                                message: `${preset.name} is now active across the app.`
+                              });
+                            }}
+                            className={cn(
+                              'rounded-2xl border p-4 text-left transition-all',
+                              stylePreset === preset.id
+                                ? 'border-[hsl(var(--accent))] bg-[hsl(var(--accent)/0.08)] ring-1 ring-[hsl(var(--accent)/0.35)]'
+                                : 'border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))] hover:border-[hsl(var(--border-soft))]'
+                            )}
+                          >
+                            <div className="mb-3 flex items-center justify-between">
+                              <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[hsl(var(--bg-panel))] text-[hsl(var(--accent))]">
+                                <Palette className="h-4 w-4" />
+                              </div>
+                              {stylePreset === preset.id && (
+                                <span className="rounded-full bg-[hsl(var(--accent))] px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-black">Active</span>
+                              )}
+                            </div>
+                            <p className="text-sm font-bold text-[hsl(var(--text))]">{preset.name}</p>
+                            <p className="mt-1 text-xs text-[hsl(var(--muted))]">{preset.description}</p>
+                          </button>
+                        ))}
+                      </div>
+                   </div>
+
                    <div className="space-y-3">
                       <label className="text-xs font-black uppercase tracking-[0.2em] text-[hsl(var(--muted))] px-2">Primary Interface Language</label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

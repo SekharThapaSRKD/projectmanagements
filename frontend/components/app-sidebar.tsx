@@ -1,8 +1,8 @@
 'use client';
 
-import { ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, MessageSquareText, MoonStar, PanelLeft, Settings2, SquareKanban, SunMedium, Home, Plus, Users2, Shield, ShoppingBag, Crown, CalendarDays } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, MessageSquareText, MoonStar, PanelLeft, Settings2, SquareKanban, SunMedium, Home, Plus, Users2, Shield, ShoppingBag, Crown, CalendarDays, CheckCircle2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
 import { useAuthStore } from '@/lib/auth-store';
@@ -22,6 +22,14 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
   const { theme, setTheme } = useTheme();
   const { t } = useTranslation();
   const [workspacesExpanded, setWorkspacesExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const apply = () => setIsMobile(window.innerWidth < 768);
+    apply();
+    window.addEventListener('resize', apply);
+    return () => window.removeEventListener('resize', apply);
+  }, []);
   
   const viewLabels: Array<{ view: ViewType; label: string; icon: typeof Home }> = [
     { view: 'dashboard', label: t('common.dashboard'), icon: Home },
@@ -57,8 +65,8 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
   return (
     <motion.aside
       initial={false}
-      animate={{ width: sidebarOpen ? 292 : 84 }}
-      className="glass-panel soft-border flex h-[calc(100vh-2rem)] flex-col rounded-[32px] p-3 shadow-2xl shadow-black/20 md:sticky md:top-4"
+      animate={{ width: isMobile ? '100%' : (sidebarOpen ? 292 : 84) }}
+      className="glass-panel soft-border flex h-[100dvh] flex-col rounded-none p-3 shadow-2xl shadow-black/20 md:sticky md:top-4 md:h-[calc(100vh-2rem)] md:rounded-[32px]"
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-3 px-2 pb-4 pt-2">
@@ -74,7 +82,7 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
                 exit={{ opacity: 0, x: -10 }}
               >
                 <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-[hsl(var(--muted))]">Platform</p>
-                <h1 className="text-xl font-bold text-white">TeamFlow</h1>
+                <h1 className="text-xl font-bold text-[hsl(var(--text))]">TeamFlow</h1>
               </motion.div>
             )}
           </AnimatePresence>
@@ -104,9 +112,9 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted))]">Active Workspace</p>
-                  <p className="truncate text-sm font-bold text-white">{activeWorkspace?.name}</p>
+                  <p className="truncate text-sm font-bold text-[hsl(var(--text))]">{activeWorkspace?.name}</p>
                 </div>
-                <ChevronDown className={`h-4 w-4 text-[hsl(var(--muted))] transition-transform duration-300 ${workspacesExpanded ? 'rotate-180 text-white' : ''}`} />
+                <ChevronDown className={`h-4 w-4 text-[hsl(var(--muted))] transition-transform duration-300 ${workspacesExpanded ? 'rotate-180 text-[hsl(var(--text))]' : ''}`} />
               </button>
 
               <AnimatePresence>
@@ -124,7 +132,7 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
                           setActiveWorkspace(ws.id);
                           setWorkspacesExpanded(false);
                         }}
-                        className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-sm transition ${activeWorkspaceId === ws.id ? 'bg-[hsl(var(--accent)/0.15)] text-[hsl(var(--accent))]' : 'text-[hsl(var(--muted))] hover:bg-white/5 hover:text-white'}`}
+                        className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-sm transition ${activeWorkspaceId === ws.id ? 'bg-[hsl(var(--accent)/0.15)] text-[hsl(var(--accent))]' : 'text-[hsl(var(--muted))] hover:bg-white/5 hover:text-[hsl(var(--text))]'}`}
                       >
                         <div className={`h-1.5 w-1.5 rounded-full ${activeWorkspaceId === ws.id ? 'bg-[hsl(var(--accent))] shadow-[0_0_8px_hsl(var(--accent))]' : 'bg-transparent'}`} />
                         <span className="truncate">{ws.name}</span>
@@ -165,8 +173,8 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
               onClick={() => { setActiveView(view); onNavClick?.(); }}
               className={`group relative flex w-full items-center gap-3 rounded-2xl px-3 py-3 transition-all duration-200 ${
                 activeView === view
-                  ? 'bg-gradient-to-r from-[hsl(var(--accent)/0.15)] to-transparent text-white shadow-sm'
-                  : 'text-[hsl(var(--muted))] hover:bg-white/5 hover:text-white'
+                  ? 'bg-gradient-to-r from-[hsl(var(--accent)/0.15)] to-transparent text-[hsl(var(--text))] shadow-sm'
+                  : 'text-[hsl(var(--muted))] hover:bg-white/5 hover:text-[hsl(var(--text))]'
               }`}
             >
               {activeView === view && (
@@ -184,7 +192,7 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
         {/* Projects Section */}
         <div className="space-y-2">
           <div className="flex items-center justify-between px-3">
-            {sidebarOpen && <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--muted))]">Projects</p>}
+            {sidebarOpen && <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--muted))]">Board</p>}
             {sidebarOpen && canManageProjects && (
               <div className="flex gap-1">
                 <button
@@ -219,7 +227,7 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
                 {sidebarOpen && (
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`truncate text-sm transition-colors ${activeProjectId === project.id ? 'font-bold text-white' : 'font-medium text-[hsl(var(--muted))] group-hover:text-white'}`}>
+                      <span className={`truncate text-sm transition-colors ${activeProjectId === project.id ? 'font-bold text-[hsl(var(--text))]' : 'font-medium text-[hsl(var(--muted))] group-hover:text-[hsl(var(--text))]'}`}>
                         {project.name}
                       </span>
                       {activeProjectId === project.id && (
@@ -282,16 +290,34 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
           </button>
         )}
 
+        {user?.subscriptionTier && user.subscriptionTier !== 'free' && (
+          <button
+            onClick={() => { setActiveAdminTab('billing'); }}
+            className="flex w-full items-center gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-3 text-emerald-300 shadow-lg transition hover:scale-[1.01] active:scale-[0.98]"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-400/20 backdrop-blur-md">
+              <Crown className="h-4 w-4 text-emerald-200" />
+            </div>
+            {sidebarOpen && (
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-200">Unlocked</p>
+                <p className="truncate text-sm font-bold capitalize">{user.subscriptionTier} Plan Active</p>
+              </div>
+            )}
+            {sidebarOpen && <CheckCircle2 className="h-4 w-4 text-emerald-200" />}
+          </button>
+        )}
+
         <div className="flex items-center justify-between gap-2 rounded-2xl bg-white/5 p-1.5 shadow-inner ring-1 ring-white/5">
           <button
             onClick={() => setTheme('light')}
-            className={`flex flex-1 items-center justify-center rounded-xl py-2 transition ${theme === 'light' ? 'bg-white text-black shadow-md' : 'text-[hsl(var(--muted))] hover:text-white'}`}
+            className={`flex flex-1 items-center justify-center rounded-xl py-2 transition ${theme === 'light' ? 'bg-white text-black shadow-md' : 'text-[hsl(var(--muted))] hover:text-[hsl(var(--text))]'}`}
           >
             <SunMedium className="h-4 w-4" />
           </button>
           <button
             onClick={() => setTheme('dark')}
-            className={`flex flex-1 items-center justify-center rounded-xl py-2 transition ${theme === 'dark' ? 'bg-[hsl(var(--accent))] text-black shadow-md' : 'text-[hsl(var(--muted))] hover:text-white'}`}
+            className={`flex flex-1 items-center justify-center rounded-xl py-2 transition ${theme === 'dark' ? 'bg-[hsl(var(--accent))] text-black shadow-md' : 'text-[hsl(var(--muted))] hover:text-[hsl(var(--text))]'}`}
           >
             <MoonStar className="h-4 w-4" />
           </button>
@@ -309,11 +335,11 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
           </div>
           {sidebarOpen && (
             <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-sm font-bold text-white group-hover:text-[hsl(var(--accent))] transition-colors">{user?.name || 'Demo User'}</p>
-              <p className="truncate text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted))]">{user?.role || 'Admin'}</p>
+              <p className="truncate text-sm font-bold text-[hsl(var(--text))] group-hover:text-[hsl(var(--accent))] transition-colors">{user?.name || 'User'}</p>
+              <p className="truncate text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--muted))]">{user?.role || 'Member'}</p>
             </div>
           )}
-          {sidebarOpen && <Settings2 className="h-4 w-4 text-[hsl(var(--muted))] group-hover:text-white transition-colors" />}
+          {sidebarOpen && <Settings2 className="h-4 w-4 text-[hsl(var(--muted))] group-hover:text-[hsl(var(--text))] transition-colors" />}
         </button>
       </div>
     </motion.aside>

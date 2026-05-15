@@ -1,40 +1,97 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@700;800;900&family=Geist+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap');
 @import "tailwindcss";
 
 :root {
   color-scheme: dark;
-  --bg: 220 24% 6%;
-  --bg-elevated: 224 20% 10%;
-  --bg-panel: 224 24% 13%;
-  --bg-soft: 225 18% 16%;
-  --border: 224 16% 22%;
-  --border-soft: 224 14% 28%;
-  --text: 210 40% 98%;
-  --muted: 215 20% 68%;
-  --accent: 165 88% 54%;
-  --accent-2: 195 90% 60%;
-  --danger: 4 90% 62%;
-  --warning: 36 96% 58%;
-  --success: 146 64% 46%;
-  --shadow: 220 60% 2%;
+  --bg: 222 32% 8%;
+  --bg-elevated: 222 26% 11%;
+  --bg-panel: 223 23% 14%;
+  --bg-soft: 223 18% 18%;
+  --border: 221 18% 26%;
+  --border-soft: 221 16% 33%;
+  --text: 220 20% 96%;
+  --muted: 217 14% 69%;
+  --accent: 212 89% 61%;
+  --accent-2: 193 84% 56%;
+  --danger: 1 82% 64%;
+  --warning: 36 92% 58%;
+  --success: 150 63% 44%;
+  --shadow: 220 48% 4%;
 }
 
 html.light {
   color-scheme: light;
-  --bg: 210 40% 98%;
+  --bg: 210 36% 97%;
   --bg-elevated: 0 0% 100%;
-  --bg-panel: 210 38% 96%;
-  --bg-soft: 214 32% 92%;
-  --border: 214 24% 86%;
-  --border-soft: 214 20% 78%;
-  --text: 222 47% 11%;
-  --muted: 215 16% 40%;
-  --accent: 165 76% 34%;
-  --accent-2: 195 84% 42%;
-  --danger: 4 78% 49%;
-  --warning: 36 90% 48%;
-  --success: 146 58% 38%;
-  --shadow: 220 18% 66%;
+  --bg-panel: 210 32% 95%;
+  --bg-soft: 213 28% 92%;
+  --border: 214 22% 84%;
+  --border-soft: 214 18% 75%;
+  --text: 222 42% 14%;
+  --muted: 217 13% 44%;
+  --accent: 216 87% 47%;
+  --accent-2: 192 80% 41%;
+  --danger: 1 74% 52%;
+  --warning: 36 84% 47%;
+  --success: 149 56% 35%;
+  --shadow: 220 14% 58%;
+}
+
+html[data-style-preset='classic'] {
+  --accent: 216 87% 47%;
+  --accent-2: 192 80% 41%;
+}
+
+html[data-style-preset='graphite'] {
+  --bg: 218 20% 9%;
+  --bg-elevated: 220 18% 12%;
+  --bg-panel: 221 15% 15%;
+  --bg-soft: 220 12% 20%;
+  --border: 219 12% 30%;
+  --border-soft: 218 10% 38%;
+  --text: 210 14% 94%;
+  --muted: 214 9% 66%;
+  --accent: 204 90% 60%;
+  --accent-2: 186 86% 54%;
+}
+
+html.light[data-style-preset='graphite'] {
+  --bg: 210 20% 96%;
+  --bg-elevated: 210 14% 99%;
+  --bg-panel: 215 14% 93%;
+  --bg-soft: 214 12% 89%;
+  --border: 217 12% 80%;
+  --border-soft: 218 10% 70%;
+  --text: 217 18% 19%;
+  --muted: 215 10% 40%;
+  --accent: 205 82% 44%;
+  --accent-2: 189 74% 39%;
+}
+
+html[data-style-preset='focus'] {
+  --bg: 221 31% 8%;
+  --bg-elevated: 222 26% 11%;
+  --bg-panel: 223 23% 14%;
+  --bg-soft: 223 18% 18%;
+  --border: 221 18% 26%;
+  --border-soft: 221 16% 33%;
+  --text: 220 20% 96%;
+  --muted: 217 14% 69%;
+  --accent: 149 72% 44%;
+  --accent-2: 178 72% 42%;
+}
+
+html.light[data-style-preset='focus'] {
+  --bg: 160 22% 96%;
+  --bg-elevated: 0 0% 100%;
+  --bg-panel: 156 19% 93%;
+  --bg-soft: 157 16% 89%;
+  --border: 156 14% 80%;
+  --border-soft: 156 12% 70%;
+  --text: 165 28% 16%;
+  --muted: 162 12% 38%;
+  --accent: 154 74% 36%;
+  --accent-2: 177 66% 37%;
 }
 
 * {
@@ -53,19 +110,20 @@ body {
   margin: 0;
   color: hsl(var(--text));
   background:
-    radial-gradient(circle at 0% 0%, rgba(46, 212, 157, 0.12), transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(84, 138, 255, 0.1), transparent 40%),
+    radial-gradient(circle at 0% 0%, hsl(var(--accent) / 0.1), transparent 42%),
+    radial-gradient(circle at 100% 100%, hsl(var(--accent-2) / 0.08), transparent 45%),
     hsl(var(--bg));
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  letter-spacing: -0.011em;
+  letter-spacing: -0.008em;
+  line-height: 1.45;
 }
 
 h1, h2, h3, h4, .font-display {
-  font-family: 'Outfit', sans-serif;
-  letter-spacing: -0.03em;
+  font-family: 'Manrope', sans-serif;
+  letter-spacing: -0.02em;
 }
 
-/* Premium Noise Texture */
+/* Subtle workspace texture */
 body::after {
   content: "";
   position: fixed;
@@ -73,7 +131,7 @@ body::after {
   left: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.015;
+  opacity: 0.012;
   pointer-events: none;
   z-index: 9999;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
@@ -105,36 +163,36 @@ body::after {
 }
 
 .glass-panel {
-  background: color-mix(in oklab, hsl(var(--bg-panel)) 82%, transparent);
-  backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid hsl(var(--border) / 0.6);
+  background: color-mix(in oklab, hsl(var(--bg-panel)) 92%, transparent);
+  backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid hsl(var(--border) / 0.72);
   box-shadow: 
-    0 4px 6px -1px rgb(0 0 0 / 0.1), 
-    0 2px 4px -2px rgb(0 0 0 / 0.1),
-    inset 0 1px 0 0 hsl(var(--text) / 0.05);
+    0 10px 24px -16px hsl(var(--shadow) / 0.9),
+    0 6px 12px -10px hsl(var(--shadow) / 0.65),
+    inset 0 1px 0 0 hsl(var(--text) / 0.04);
 }
 
 .soft-border {
-  border: 1px solid hsl(var(--border) / 0.6);
+  border: 1px solid hsl(var(--border) / 0.7);
 }
 
 .app-grid {
   background-image:
-    linear-gradient(to right, hsl(var(--border) / 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, hsl(var(--border) / 0.08) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(to right, hsl(var(--border) / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--border) / 0.06) 1px, transparent 1px);
+  background-size: 36px 36px;
 }
 
 .task-card {
-  background: color-mix(in oklab, hsl(var(--bg-elevated)) 96%, transparent);
-  border: 1px solid hsl(var(--border) / 0.5);
+  background: color-mix(in oklab, hsl(var(--bg-elevated)) 98%, transparent);
+  border: 1px solid hsl(var(--border) / 0.62);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .task-card:hover {
-  border-color: hsl(var(--accent) / 0.4);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px -8px hsl(var(--shadow) / 0.5);
+  border-color: hsl(var(--accent) / 0.46);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px -18px hsl(var(--shadow) / 0.95);
 }
 
 .premium-card {
@@ -153,7 +211,7 @@ body::after {
 }
 
 .markdown-preview code {
-  font-family: 'Geist Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.9em;
 }
 

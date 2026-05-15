@@ -445,7 +445,7 @@ export function DocsView() {
   };
 
   return (
-    <div className="grid h-[calc(100vh-8rem)] lg:h-[calc(100vh-12rem)] grid-cols-1 lg:grid-cols-[300px_1fr] overflow-hidden rounded-[32px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))]">
+    <div className="grid h-[calc(100dvh-8rem)] lg:h-[calc(100vh-12rem)] grid-cols-1 lg:grid-cols-[300px_1fr] overflow-hidden rounded-[24px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] md:rounded-[32px]">
       <input
         ref={fileInputRef}
         type="file"

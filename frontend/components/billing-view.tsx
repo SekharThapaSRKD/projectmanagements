@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { CreditCard, AlertCircle, Check } from 'lucide-react';
+import { CheckCircle2, CreditCard, AlertCircle, Check } from 'lucide-react';
 import { UsageDashboard } from './usage-dashboard';
 
 interface Subscription {
@@ -23,11 +23,13 @@ export function BillingView() {
     fetchSubscription();
   }, []);
 
+  const currentTier = subscription?.plan ?? 'free';
+
   const fetchSubscription = async () => {
     try {
       const response = await fetch('/api/v1/subscription', {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('teamflow-auth')}`,
+            Authorization: `Bearer ${localStorage.getItem('authToken') || ''}`,
         },
       });
       if (response.ok) {
@@ -52,7 +54,7 @@ export function BillingView() {
       const response = await fetch('/api/v1/subscription/cancel', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('teamflow-auth')}`,
+            Authorization: `Bearer ${localStorage.getItem('authToken') || ''}`,
         },
       });
 
@@ -120,6 +122,22 @@ export function BillingView() {
         <p className="text-[hsl(var(--muted))]">Manage your TeamFlow subscription and resource usage</p>
       </div>
 
+      <div className={`rounded-2xl border p-4 ${currentTier === 'free' ? 'border-blue-500/20 bg-blue-500/10' : 'border-emerald-500/20 bg-emerald-500/10'}`}>
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className={`mt-0.5 h-5 w-5 ${currentTier === 'free' ? 'text-blue-300' : 'text-emerald-300'}`} />
+          <div>
+            <p className="text-sm font-semibold text-white">
+              {currentTier === 'free' ? 'Free plan active' : `${currentTier.toUpperCase()} unlocked`}
+            </p>
+            <p className="text-sm text-[hsl(var(--muted))]">
+              {currentTier === 'free'
+                ? 'Upgrade to unlock premium workspaces, projects, and team limits.'
+                : 'Your paid plan is active and the premium limits are enabled in the app.'}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Usage Dashboard */}
       <UsageDashboard />
 
@@ -149,7 +167,7 @@ export function BillingView() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <span className={`px-3 py-1 rounded-full border text-sm font-semibold capitalize ${getPlanBadgeColor(subscription.plan)}`}>
-                  {subscription.plan} Plan
+                  {subscription.plan === 'free' ? 'Free Plan' : `${subscription.plan} Unlocked`}
                 </span>
                 <span className={`text-sm font-semibold capitalize ${getStatusColor(subscription.status)}`}>
                   {subscription.status}

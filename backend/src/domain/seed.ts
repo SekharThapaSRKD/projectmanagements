@@ -249,14 +249,16 @@ export const createSeedState = async (): Promise<TeamFlowState> => {
         content: 'Launchpad board looks good. I want a stronger hover state for drop zones.',
         senderId: 'mem_mason',
         channelId: 'channel_launchpad',
-        createdAt: daysAgo(1)
+        createdAt: daysAgo(1),
+        updatedAt: daysAgo(1)
       },
       {
         id: 'msg_2',
         content: 'I will tighten the analytics copy after the sprint demo.',
         senderId: 'mem_ava',
         channelId: 'channel_team',
-        createdAt: daysAgo(1)
+        createdAt: daysAgo(1),
+        updatedAt: daysAgo(1)
       }
     ],
     documents: [

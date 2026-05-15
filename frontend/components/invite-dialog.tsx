@@ -43,7 +43,7 @@ export function InviteDialog({ isOpen, onClose, projectId }: InviteDialogProps) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[110] flex items-end justify-center p-3 sm:items-center sm:p-4">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -55,9 +55,9 @@ export function InviteDialog({ isOpen, onClose, projectId }: InviteDialogProps) 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-[hsl(var(--border))] bg-[hsl(var(--bg-elevated))] p-8 shadow-2xl"
+        className="relative w-full max-w-md overflow-hidden rounded-[24px] border border-[hsl(var(--border))] bg-[hsl(var(--bg-elevated))] p-5 shadow-2xl sm:rounded-[32px] sm:p-8"
       >
-        <button onClick={onClose} className="absolute right-6 top-6 text-[hsl(var(--muted))] hover:text-white transition">
+        <button onClick={onClose} className="absolute right-4 top-4 text-[hsl(var(--muted))] transition hover:text-white sm:right-6 sm:top-6">
           <X className="h-5 w-5" />
         </button>
 
@@ -68,7 +68,7 @@ export function InviteDialog({ isOpen, onClose, projectId }: InviteDialogProps) 
         <h2 className="text-2xl font-bold text-white">Invite to {project?.name || 'Project'}</h2>
         <p className="mt-2 text-sm text-[hsl(var(--muted))]">Invite team members via email to collaborate on this project.</p>
 
-        <form onSubmit={handleInvite} className="mt-8 space-y-4">
+        <form onSubmit={handleInvite} className="mt-6 space-y-4 sm:mt-8">
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--muted))]">Email Address</label>
             <div className="flex items-center gap-2 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))] p-2 pl-4">
@@ -102,7 +102,7 @@ export function InviteDialog({ isOpen, onClose, projectId }: InviteDialogProps) 
 
         <button 
           onClick={onClose}
-          className="mt-8 w-full rounded-2xl bg-[hsl(var(--bg-soft))] py-4 font-bold text-white transition hover:bg-[hsl(var(--border))]"
+          className="mt-6 w-full rounded-2xl bg-[hsl(var(--bg-soft))] py-4 font-bold text-white transition hover:bg-[hsl(var(--border))] sm:mt-8"
         >
           Close
         </button>

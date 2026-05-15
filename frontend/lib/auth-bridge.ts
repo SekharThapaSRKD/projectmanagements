@@ -35,7 +35,7 @@ const cleanupBase = (baseUrl: string | undefined) => {
 
 export const getAuthProviderBase = () => cleanupBase(process.env.NEXT_PUBLIC_AUTH_PROVIDER_URL);
 
-export const getAuthMode = (): AuthMode => (getAuthProviderBase() ? 'real' : 'demo');
+export const getAuthMode = (): AuthMode => 'real';
 
 export const parseAuthUser = (input: unknown, fallbackProvider: AuthUser['provider']): AuthUser => {
   const candidate = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
@@ -135,6 +135,12 @@ export const toggleTwoFactor = async (enabled: boolean, password: string) =>
   requestAuthJson<{ message: string }>('/api/v1/auth/2fa/toggle', {
     method: 'POST',
     body: JSON.stringify({ enabled, password })
+  }, true);
+
+export const deleteAccount = async (password: string) =>
+  requestAuthJson<{ message: string }>('/api/v1/account', {
+    method: 'DELETE',
+    body: JSON.stringify({ password })
   }, true);
 
 export const requestEmailRegistration = async (name: string, email: string, password: string) => {

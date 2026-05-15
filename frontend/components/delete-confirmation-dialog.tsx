@@ -25,7 +25,7 @@ export function DeleteConfirmationDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[200] flex items-end justify-center p-3 sm:items-center sm:p-4">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -37,7 +37,7 @@ export function DeleteConfirmationDialog({
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-md overflow-hidden rounded-[40px] border border-white/10 bg-[hsl(var(--bg-elevated))] p-10 shadow-2xl"
+        className="relative w-full max-w-md overflow-hidden rounded-[24px] border border-white/10 bg-[hsl(var(--bg-elevated))] p-6 shadow-2xl sm:rounded-[40px] sm:p-10"
       >
         <div className="flex flex-col items-center text-center">
           <div className={isPermanent ? "mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-red-500/10 text-red-500" : "mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-amber-500/10 text-amber-500"}>

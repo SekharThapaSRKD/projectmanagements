@@ -29,7 +29,7 @@ function LoginContent() {
   const { loginWithGoogle, loginWithGitHub, loginWithApple, loginWithEmail, register, requestPasswordReset, resetPassword, completeOAuthLogin, authError, clearAuthError } = useAuthStore();
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('demo@gmail.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('password');
   const [pending, setPending] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -101,7 +101,7 @@ function LoginContent() {
 
     try {
       if (mode === 'register') {
-        await register(name || 'Demo User', email, password);
+        await register(name || 'User', email, password);
         complete();
       } else if (mode === 'login') {
         const result = await loginWithEmail(email, password, challengeRequired ? twoFactorCode : undefined);
@@ -141,7 +141,7 @@ function LoginContent() {
       if (provider === 'github') await loginWithGitHub();
       if (provider === 'apple') await loginWithApple();
 
-      if (authMode === 'demo') {
+      if (authMode === 'real') {
         complete();
       }
     } catch (error) {
@@ -180,7 +180,7 @@ function LoginContent() {
     <main className="min-h-screen bg-[hsl(var(--bg))] selection:bg-[hsl(var(--accent)/0.3)] selection:text-white">
       <LoadingOverlay />
       
-      <div className="mx-auto grid min-h-screen max-w-[1600px] lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="mx-auto grid min-h-screen w-full max-w-[1600px] lg:grid-cols-[1.1fr_0.9fr]">
         {/* Left Side: Brand & Features */}
         <section className="relative hidden flex-col justify-between overflow-hidden p-16 lg:flex">
           {/* Background Decoration */}
@@ -200,7 +200,7 @@ function LoginContent() {
             <div className="mt-20 max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-[hsl(var(--muted))] mb-6">
                 <Sparkles className="h-3.5 w-3.5 text-[hsl(var(--accent))]" />
-                {authMode === 'real' ? 'Real-Time Sync Active' : 'Offline Preview Mode'}
+                {authMode === 'real' ? 'Real-Time Sync Active' : 'Connect Backend to Continue'}
               </div>
               <h2 className="mt-0 text-6xl font-black leading-[1] tracking-tighter text-white lg:text-7xl xl:text-8xl">
                 RUN YOUR <span className="text-[hsl(var(--accent))]">TEAM</span> FROM ONE CALM CORE.
@@ -241,14 +241,14 @@ function LoginContent() {
             </div>
             <div className="flex items-center gap-4">
               <ShieldCheck className="h-4 w-4 text-[hsl(var(--accent))]" />
-              {authMode === 'real' ? 'BACKEND SECURED' : 'LOCAL-ONLY PROTOCOL'}
+              {authMode === 'real' ? 'BACKEND SECURED' : 'BACKEND REQUIRED'}
             </div>
           </div>
         </section>
 
         {/* Right Side: Authentication */}
-        <section className="flex flex-col items-center justify-center p-8 md:p-12 lg:p-16 bg-white/[0.02] lg:bg-transparent">
-          <div className="w-full max-w-[400px]">
+        <section className="flex flex-col items-center justify-center p-5 sm:p-8 md:p-12 lg:p-16 bg-white/[0.02] lg:bg-transparent">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="w-full max-w-[460px] sm:max-w-[400px]">
             <div className="mb-8">
               <div className="lg:hidden flex items-center gap-3 mb-8">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(var(--accent))] text-black">
@@ -296,7 +296,7 @@ function LoginContent() {
                 </motion.div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <motion.form onSubmit={handleSubmit} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, duration: 0.45 }} className="space-y-4">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={mode}
@@ -323,7 +323,7 @@ function LoginContent() {
                         value={email}
                         onChange={event => setEmail(event.target.value)}
                         type="email"
-                        placeholder="demo@teamflow.run"
+                        placeholder="name@company.com"
                         className="w-full h-12 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-[hsl(var(--accent)/0.5)] focus:ring-4 focus:ring-[hsl(var(--accent)/0.05)] transition-all"
                       />
                     </div>
@@ -394,7 +394,7 @@ function LoginContent() {
                   </span>
                   <div className="absolute inset-0 -z-0 bg-gradient-to-r from-white to-[hsl(var(--accent))] opacity-0 transition-opacity group-hover:opacity-10" />
                 </button>
-              </form>
+              </motion.form>
 
               <div className="mt-8 space-y-4 text-center">
                 <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--muted))]">
@@ -417,7 +417,7 @@ function LoginContent() {
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
         </section>
       </div>
     </main>

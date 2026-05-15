@@ -61,7 +61,7 @@ export const demoData: SeedData = {
       projectId: 'proj_sprintcore',
       startDate: daysAgo(-14),
       endDate: daysAgo(-1),
-      status: 'planned',
+      status: 'planning',
       goal: 'Polish collaboration tools'
     }
   ],

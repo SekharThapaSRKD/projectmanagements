@@ -58,6 +58,43 @@ export class MongoService {
     return this.findAccountById(id);
   }
 
+  async deleteAccount(id: string): Promise<void> {
+    // Get all workspaces owned by this account
+    const workspaces = await this.getOwnedWorkspaces(id);
+    
+    // Delete all projects and tasks in those workspaces
+    for (const workspace of workspaces) {
+      const projects = await this.db.collection('projects').find({ workspaceId: workspace.id }).toArray();
+      for (const project of projects as any[]) {
+        await this.deleteProject(project.id);
+        await this.db.collection('tasks').deleteMany({ projectId: project.id });
+      }
+    }
+
+    // Delete all workspaces owned by this account
+    for (const workspace of workspaces) {
+      await this.db.collection('workspaces').deleteOne({ id: workspace.id });
+    }
+
+    // Delete all members associated with this account
+    await this.db.collection('members').deleteMany({ accountId: id });
+
+    // Delete all invitations sent by or to this account
+    await this.db.collection('invitations').deleteMany({ $or: [{ senderId: id }, { accountId: id }] });
+
+    // Delete all documents created by this account
+    await this.db.collection('documents').deleteMany({ createdBy: id });
+
+    // Delete all channels, boards, and tasks associated with workspaces
+    for (const workspace of workspaces) {
+      await this.db.collection('channels').deleteMany({ workspaceId: workspace.id });
+      await this.db.collection('boards').deleteMany({ workspaceId: workspace.id });
+    }
+
+    // Delete the account itself
+    await this.db.collection('accounts').deleteOne({ id });
+  }
+
   // ===== WORKSPACES =====
   async createWorkspace(workspace: Omit<Workspace, '_id'>): Promise<Workspace> {
     const result = await this.db.collection('workspaces').insertOne(workspace as any);
@@ -178,12 +215,15 @@ export class MongoService {
   }
 
   async getChannelMessages(channelId: string, limit: number = 50): Promise<Message[]> {
-    return this.db
+    const msgs = await this.db
       .collection('messages')
       .find({ channelId })
       .sort({ createdAt: -1 })
       .limit(limit)
-      .toArray() as Promise<Message[]>;
+      .toArray();
+
+    // return chronological order (oldest first)
+    return (msgs as Message[]).reverse();
   }
 
   // ===== CHANNELS =====

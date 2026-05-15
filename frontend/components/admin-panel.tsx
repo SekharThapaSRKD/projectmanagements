@@ -33,6 +33,7 @@ import {
   Settings2
 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
 import { useAppStore } from '@/lib/store';
 import { useAuthStore } from '@/lib/auth-store';
 import { useTranslation } from '@/hooks/use-translation';
@@ -70,6 +71,8 @@ export function AdminPanel() {
   const { t } = useTranslation();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [confirmPlan, setConfirmPlan] = useState<'pro' | 'enterprise' | null>(null);
+  const [upgradingPlan, setUpgradingPlan] = useState<'pro' | 'enterprise' | null>(null);
 
   useEffect(() => setIsMounted(true), []);
 
@@ -111,6 +114,60 @@ export function AdminPanel() {
         return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
       default:
         return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+    }
+  };
+
+  const handleConfirmUpgrade = async () => {
+    if (!confirmPlan) return;
+
+    setUpgradingPlan(confirmPlan);
+    try {
+      const baseUrl = (process.env.NEXT_PUBLIC_AUTH_PROVIDER_URL || '').trim().replace(/\/$/, '');
+      const response = await fetch(`${baseUrl}/api/v1/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('authToken') || ''}`,
+        },
+        body: JSON.stringify({ planId: confirmPlan }),
+      });
+
+      const rawBody = await response.text();
+      let data: { error?: string; checkoutUrl?: string; sessionId?: string } = {};
+      try {
+        data = rawBody ? JSON.parse(rawBody) : {};
+      } catch {
+        throw new Error(`Unexpected server response (${response.status}).`);
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Upgrade failed');
+      }
+
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
+      if (data.sessionId) {
+        const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+        if (!stripe) {
+          throw new Error('Stripe is not initialized. Check publishable key.');
+        }
+        const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+        if (result.error) {
+          throw new Error(result.error.message || 'Stripe redirect failed');
+        }
+        return;
+      }
+
+      throw new Error('Invalid checkout response from server');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred.';
+      alert(message);
+    } finally {
+      setUpgradingPlan(null);
+      setConfirmPlan(null);
     }
   };
 
@@ -503,6 +560,13 @@ export function AdminPanel() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setActiveAdminTab('billing');
+                          // Scroll to pricing plans after tab change
+                          setTimeout(() => {
+                            const element = document.getElementById('pricing-plans');
+                            if (element) {
+                              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                          }, 300);
                         }}
                         className="rounded-2xl bg-white px-8 py-4 text-sm font-black uppercase tracking-widest text-black transition hover:bg-[hsl(var(--accent))] hover:scale-105 active:scale-95 shadow-xl cursor-pointer"
                       >
@@ -571,7 +635,7 @@ export function AdminPanel() {
                 </div>
 
                 {/* Upgrade Options */}
-                <div className="mt-12 space-y-6">
+                <div id="pricing-plans" className="mt-12 space-y-6">
                   <div>
                     <h3 className="text-2xl font-black text-white tracking-tighter uppercase mb-6">Upgrade Your Core</h3>
                     <p className="text-sm text-[hsl(var(--muted))] mb-8">Scale your team with enhanced limits and premium features.</p>
@@ -606,7 +670,10 @@ export function AdminPanel() {
                           </div>
                         </div>
                         
-                        <button className="mt-8 w-full rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-black uppercase tracking-widest text-white transition">
+                        <button
+                          onClick={() => setConfirmPlan('pro')}
+                          className="mt-8 w-full rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-black uppercase tracking-widest text-white transition"
+                        >
                           Upgrade to Pro
                         </button>
                       </div>
@@ -640,8 +707,11 @@ export function AdminPanel() {
                           </div>
                         </div>
                         
-                        <button className="mt-8 w-full rounded-xl bg-purple-600 hover:bg-purple-700 px-6 py-3 text-sm font-black uppercase tracking-widest text-white transition">
-                          Contact Sales
+                        <button
+                          onClick={() => setConfirmPlan('enterprise')}
+                          className="mt-8 w-full rounded-xl bg-purple-600 hover:bg-purple-700 px-6 py-3 text-sm font-black uppercase tracking-widest text-white transition"
+                        >
+                          Buy Enterprise
                         </button>
                       </div>
                     </div>
@@ -717,6 +787,34 @@ export function AdminPanel() {
         confirmLabel="Initialize Full Reset"
         isPermanent={true}
       />
+
+      {confirmPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[hsl(var(--bg-elevated))] p-6 shadow-2xl">
+            <h3 className="text-xl font-black text-white uppercase tracking-wider">Confirm Purchase</h3>
+            <p className="mt-3 text-sm text-[hsl(var(--muted))]">
+              Confirm upgrade to <span className="font-bold text-white">{confirmPlan === 'pro' ? 'Pro' : 'Enterprise'}</span> plan for
+              <span className="font-bold text-white"> {confirmPlan === 'pro' ? '$99/month' : '$299/month'}</span>.
+            </p>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setConfirmPlan(null)}
+                className="flex-1 rounded-xl border border-white/20 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmUpgrade}
+                disabled={upgradingPlan === confirmPlan}
+                className="flex-1 rounded-xl bg-[hsl(var(--accent))] px-4 py-2.5 text-sm font-black uppercase tracking-wider text-black hover:opacity-90 disabled:opacity-60 transition"
+              >
+                {upgradingPlan === confirmPlan ? 'Processing...' : 'Confirm & Pay'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

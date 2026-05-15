@@ -20,7 +20,7 @@ const addDays = (isoString: string, days: number) => {
 };
 
 export function SprintPanel() {
-  const { sprints, tasks, activeProjectId, addSprint, updateSprint, startSprint, completeSprint, activeSprintId, setActiveSprint, addToast } = useAppStore();
+  const { sprints, tasks, activeProjectId, addSprint, updateSprint, startSprint, completeSprint, activeSprintId, setActiveSprint, deleteSprint, deleteSprintWithTasks, addToast } = useAppStore();
   const [name, setName] = useState('');
   const [goal, setGoal] = useState('');
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -30,6 +30,10 @@ export function SprintPanel() {
   const [editGoal, setEditGoal] = useState('');
   const [editStartDate, setEditStartDate] = useState('');
   const [editEndDate, setEditEndDate] = useState('');
+  const [deleteModalSprint, setDeleteModalSprint] = useState<Sprint | null>(null);
+  const [deleteMode, setDeleteMode] = useState<'unlink' | 'delete'>('unlink');
+  const [optionMenuSprintId, setOptionMenuSprintId] = useState<string | null>(null);
+  const [startMenuSprintId, setStartMenuSprintId] = useState<string | null>(null);
 
   const projectSprints = useMemo(() => sprints.filter(sprint => sprint.projectId === activeProjectId), [activeProjectId, sprints]);
 
@@ -331,16 +335,84 @@ export function SprintPanel() {
                   >
                     <Edit3 className="h-4 w-4 text-[hsl(var(--accent))]" /> Edit
                   </button>
-                  {sprint.status === 'planned' && (
-                    <button type="button" onClick={() => startSprint(sprint.id)} className="inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--accent)/0.1)] px-4 py-2 text-xs font-bold text-[hsl(var(--accent))] transition hover:bg-[hsl(var(--accent)/0.2)] border border-[hsl(var(--accent)/0.2)]">
-                      <Play className="h-4 w-4" /> Start Sprint
-                    </button>
+                  {sprint.status === 'planning' && (
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setStartMenuSprintId(startMenuSprintId === sprint.id ? null : sprint.id)}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--accent)/0.1)] px-4 py-2 text-xs font-bold text-[hsl(var(--accent))] transition hover:bg-[hsl(var(--accent)/0.2)] border border-[hsl(var(--accent)/0.2)]"
+                      >
+                        <Play className="h-4 w-4" /> Start Sprint
+                      </button>
+
+                      {startMenuSprintId === sprint.id && (
+                        <div className="absolute right-0 z-20 mt-2 w-44 rounded-lg border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] p-2 shadow-lg">
+                          <button
+                            onClick={() => {
+                              setStartMenuSprintId(null);
+                              openEditSprint(sprint);
+                            }}
+                            className="w-full text-left rounded-md px-3 py-2 text-sm hover:bg-[hsl(var(--bg-soft))]"
+                          >
+                            Configure
+                          </button>
+                          <button
+                            onClick={() => {
+                              setStartMenuSprintId(null);
+                              const sprintTasks = tasks.filter(t => t.sprintId === sprint.id);
+                              if (sprintTasks.length === 0) {
+                                // eslint-disable-next-line no-restricted-globals
+                                const ok = confirm('This sprint has no tasks. Start anyway?');
+                                if (!ok) return;
+                              }
+                              startSprint(sprint.id);
+                              addToast({ type: 'success', title: 'Sprint Started', description: `${sprint.name} is now active.` });
+                            }}
+                            className="w-full text-left rounded-md px-3 py-2 text-sm text-[hsl(var(--accent))] hover:bg-[hsl(var(--bg-soft))]"
+                          >
+                            Start
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
                   {sprint.status !== 'completed' && (
                     <button type="button" onClick={() => completeSprint(sprint.id)} className="inline-flex items-center gap-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))] px-4 py-2 text-xs font-bold text-[hsl(var(--text))] transition hover:bg-[hsl(var(--bg-panel))]">
                       <SquareCheckBig className="h-4 w-4 text-emerald-500" /> Complete
                     </button>
                   )}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setOptionMenuSprintId(optionMenuSprintId === sprint.id ? null : sprint.id)}
+                      className="inline-flex items-center gap-2 rounded-xl border border-red-500 bg-[rgba(255,0,0,0.03)] px-4 py-2 text-xs font-bold text-red-400 transition hover:bg-[rgba(255,0,0,0.06)]"
+                    >
+                      <X className="h-4 w-4" /> Delete
+                    </button>
+
+                    {optionMenuSprintId === sprint.id && (
+                      <div className="absolute right-0 z-20 mt-2 w-44 rounded-lg border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] p-2 shadow-lg">
+                        <button
+                          onClick={() => {
+                            setOptionMenuSprintId(null);
+                            openEditSprint(sprint);
+                          }}
+                          className="w-full text-left rounded-md px-3 py-2 text-sm hover:bg-[hsl(var(--bg-soft))]"
+                        >
+                          Configure
+                        </button>
+                        <button
+                          onClick={() => {
+                            setOptionMenuSprintId(null);
+                            setDeleteModalSprint(sprint);
+                          }}
+                          className="w-full text-left rounded-md px-3 py-2 text-sm text-red-500 hover:bg-[hsl(var(--bg-soft))]"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {sprintTasks.length > 0 && (
@@ -386,7 +458,7 @@ export function SprintPanel() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-3 py-3 backdrop-blur-sm sm:items-center sm:px-4 sm:py-8"
             onClick={() => setEditingSprint(null)}
           >
             <motion.div
@@ -394,7 +466,7 @@ export function SprintPanel() {
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 16, opacity: 0, scale: 0.96 }}
               onClick={event => event.stopPropagation()}
-              className="w-full max-w-2xl overflow-hidden rounded-[32px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] shadow-2xl"
+              className="w-full max-w-2xl max-h-[88dvh] overflow-y-auto rounded-[24px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] shadow-2xl sm:rounded-[32px]"
             >
               <div className="flex items-center justify-between border-b border-[hsl(var(--border-soft))] px-6 py-4">
                 <div>
@@ -466,6 +538,67 @@ export function SprintPanel() {
             </motion.div>
           </motion.div>
         )}
+        <AnimatePresence>
+          {deleteModalSprint && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-3 py-3 backdrop-blur-sm sm:items-center sm:px-4 sm:py-8"
+              onClick={() => setDeleteModalSprint(null)}
+            >
+              <motion.div
+                initial={{ y: 24, opacity: 0, scale: 0.96 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 16, opacity: 0, scale: 0.96 }}
+                onClick={event => event.stopPropagation()}
+                className="w-full max-w-lg max-h-[85dvh] overflow-y-auto rounded-[20px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] shadow-2xl sm:rounded-[24px]"
+              >
+                <div className="p-6">
+                  <h3 className="text-lg font-bold">Delete Sprint</h3>
+                  <p className="mt-2 text-sm text-[hsl(var(--muted))]">Choose how to handle tasks in this sprint.</p>
+
+                  <div className="mt-4 space-y-3">
+                    <label className="flex items-center gap-3">
+                      <input type="radio" name="deleteMode" checked={deleteMode === 'unlink'} onChange={() => setDeleteMode('unlink')} />
+                      <div>
+                        <div className="font-semibold">Unlink tasks (default)</div>
+                        <div className="text-xs text-[hsl(var(--muted))]">Remove the sprint and keep tasks, tasks will be unassigned from the sprint.</div>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-3">
+                      <input type="radio" name="deleteMode" checked={deleteMode === 'delete'} onChange={() => setDeleteMode('delete')} />
+                      <div>
+                        <div className="font-semibold">Delete tasks permanently</div>
+                        <div className="text-xs text-[hsl(var(--muted))]">Remove the sprint and permanently delete all tasks that belong to it.</div>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className="mt-6 flex items-center justify-end gap-3">
+                    <button onClick={() => setDeleteModalSprint(null)} className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))] px-4 py-2">Cancel</button>
+                    <button
+                      onClick={() => {
+                        if (!deleteModalSprint) return;
+                        if (deleteMode === 'unlink') {
+                          deleteSprint(deleteModalSprint.id);
+                          addToast({ type: 'success', title: 'Sprint Deleted', description: `${deleteModalSprint.name} removed (tasks unlinked).` });
+                        } else {
+                          deleteSprintWithTasks(deleteModalSprint.id);
+                          addToast({ type: 'success', title: 'Sprint and tasks Deleted', description: `${deleteModalSprint.name} and its tasks have been removed.` });
+                        }
+                        setDeleteModalSprint(null);
+                      }}
+                      className="rounded-2xl bg-red-600 px-4 py-2 text-white"
+                    >
+                      Confirm Delete
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </AnimatePresence>
     </div>
   );

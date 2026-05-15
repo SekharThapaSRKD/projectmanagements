@@ -26,7 +26,7 @@ export const translations: Record<Locale, any> = {
   en: {
     common: {
       dashboard: 'Dashboard',
-      projects: 'Projects',
+      projects: 'Board',
       tasks: 'Tasks',
       settings: 'Settings',
       admin: 'Admin',
@@ -47,7 +47,7 @@ export const translations: Record<Locale, any> = {
   es: {
     common: {
       dashboard: 'Tablero',
-      projects: 'Proyectos',
+      projects: 'Tablero',
       tasks: 'Tareas',
       settings: 'Ajustes',
       admin: 'Admin',
@@ -68,7 +68,7 @@ export const translations: Record<Locale, any> = {
   hi: {
     common: {
       dashboard: 'डैशबोर्ड',
-      projects: 'परियोजनाएं',
+      projects: 'बोर्ड',
       tasks: 'कार्य',
       settings: 'सेटिंग्स',
       admin: 'एडमिन',

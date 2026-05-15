@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { changePassword, getAuthMode, parseAuthUser, requestEmailLogin, requestEmailRegistration, requestPasswordResetOtp, resetPasswordWithOtp, startOAuthFlow, toggleTwoFactor, type EmailLoginResult } from './auth-bridge';
-import type { AuthMode, AuthUser, MemberRole, OAuthProvider } from './types';
+import { changePassword, deleteAccount, getAuthMode, parseAuthUser, requestEmailLogin, requestEmailRegistration, requestPasswordResetOtp, resetPasswordWithOtp, startOAuthFlow, toggleTwoFactor, type EmailLoginResult } from './auth-bridge';
+import type { AuthMode, AuthUser, OAuthProvider, SubscriptionTier } from './types';
 
 interface AuthState {
   user: AuthUser | null;
@@ -18,39 +18,14 @@ interface AuthState {
   resetPassword: (email: string, otp: string, password: string) => Promise<void>;
   changePassword: (currentPassword: string, password: string) => Promise<void>;
   setTwoFactorEnabled: (enabled: boolean, password: string) => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
+  setSubscriptionTier: (tier: SubscriptionTier) => void;
   completeOAuthLogin: (user: AuthUser, token?: string) => void;
+  refreshCurrentUser: () => Promise<void>;
   clearAuthError: () => void;
   logout: () => void;
   getAuthToken: () => string | null;
 }
-
-const avatarFor = (name: string) =>
-  name
-    .split(' ')
-    .map(part => part.slice(0, 1))
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-
-const createUser = (provider: AuthUser['provider'], email: string, name?: string, role: MemberRole = 'admin'): AuthUser => {
-  const displayName = name?.trim() || email.split('@')[0].replace(/[._-]+/g, ' ');
-
-  return {
-    id: `auth_${provider}_${Date.now()}`,
-    name: displayName
-      .split(' ')
-      .map(part => part.slice(0, 1).toUpperCase() + part.slice(1))
-      .join(' '),
-    email,
-    provider,
-    role,
-    subscriptionTier: 'free',
-    avatar: avatarFor(displayName)
-  };
-};
-
-const createDemoAuth = (provider: AuthUser['provider'], name: string, email: string) =>
-  createUser(provider, email, name, 'admin');
 
 const withAuthError = (set: (partial: Partial<AuthState>) => void, message: string) => {
   set({ authError: message });
@@ -58,21 +33,8 @@ const withAuthError = (set: (partial: Partial<AuthState>) => void, message: stri
 };
 
 const runOAuth = (provider: OAuthProvider, set: (partial: Partial<AuthState>) => void) => {
-  const mode = getAuthMode();
-  set({ authMode: mode, authError: null });
-
-  if (mode === 'real') {
-    startOAuthFlow(provider);
-    return;
-  }
-
-  const seed = provider === 'google'
-    ? createDemoAuth('google', 'Google Demo User', 'google-demo@teamflow.run')
-    : provider === 'github'
-      ? createDemoAuth('github', 'GitHub Demo User', 'github-demo@teamflow.run')
-      : createDemoAuth('apple', 'Apple Demo User', 'apple-demo@teamflow.run');
-
-  set({ user: seed, isAuthenticated: true, authError: null, authMode: 'demo' });
+  set({ authMode: 'real', authError: null });
+  startOAuthFlow(provider);
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -87,13 +49,7 @@ export const useAuthStore = create<AuthState>()(
       loginWithGitHub: async () => runOAuth('github', set),
       loginWithApple: async () => runOAuth('apple', set),
       loginWithEmail: async (email, password, otp) => {
-        const mode = getAuthMode();
-        set({ authMode: mode, authError: null });
-
-        if (mode === 'demo') {
-          set({ user: createUser('email', email, email.split('@')[0]), isAuthenticated: true, authError: null, token: 'demo-token' });
-          return;
-        }
+        set({ authMode: 'real', authError: null });
 
         try {
           const result = await requestEmailLogin(email, password, otp);
@@ -111,45 +67,29 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       requestPasswordReset: async (email: string) => {
-        const mode = getAuthMode();
-        if (mode === 'demo') {
-          return;
-        }
-
         await requestPasswordResetOtp(email);
       },
       resetPassword: async (email: string, otp: string, password: string) => {
-        const mode = getAuthMode();
-        if (mode === 'demo') {
-          return;
-        }
-
         await resetPasswordWithOtp(email, otp, password);
       },
       changePassword: async (currentPassword: string, password: string) => {
-        const mode = getAuthMode();
-        if (mode === 'demo') {
-          return;
-        }
-
         await changePassword(currentPassword, password);
       },
       setTwoFactorEnabled: async (enabled: boolean, password: string) => {
-        const mode = getAuthMode();
-        if (mode === 'demo') {
-          return;
-        }
-
         await toggleTwoFactor(enabled, password);
       },
+      deleteAccount: async (password: string) => {
+        await deleteAccount(password);
+        localStorage.removeItem('authToken');
+        set({ user: null, isAuthenticated: false, authError: null, token: null });
+      },
+      setSubscriptionTier: (tier: SubscriptionTier) => {
+        set(state => ({
+          user: state.user ? { ...state.user, subscriptionTier: tier } : state.user
+        }));
+      },
       register: async (name, email, password) => {
-        const mode = getAuthMode();
-        set({ authMode: mode, authError: null });
-
-        if (mode === 'demo') {
-          set({ user: createUser('email', email, name), isAuthenticated: true, authError: null, token: 'demo-token' });
-          return;
-        }
+        set({ authMode: 'real', authError: null });
 
         try {
           const user = await requestEmailRegistration(name, email, password);
@@ -164,6 +104,30 @@ export const useAuthStore = create<AuthState>()(
           localStorage.setItem('authToken', token);
         }
         set({ user: parseAuthUser(user, user.provider), isAuthenticated: true, authMode: 'real', authError: null, token });
+      },
+      refreshCurrentUser: async () => {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          return;
+        }
+
+        const baseUrl = (process.env.NEXT_PUBLIC_AUTH_PROVIDER_URL || '').trim().replace(/\/$/, '');
+        if (!baseUrl) {
+          return;
+        }
+
+        const response = await fetch(`${baseUrl}/api/v1/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const user = await response.json();
+        set({ user: parseAuthUser(user, user.provider ?? 'email'), isAuthenticated: true, authMode: 'real', authError: null, token });
       },
       clearAuthError: () => set({ authError: null }),
       logout: () => {

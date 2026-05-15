@@ -2,7 +2,13 @@
 
 import { ThemeProvider as NextThemeProvider } from 'next-themes';
 import type { ThemeProviderProps } from 'next-themes';
+import { useEffect } from 'react';
+import { initializeStylePreset } from '@/lib/style-preset';
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  return <NextThemeProvider attribute="class" defaultTheme="dark" enableSystem {...props}>{children}</NextThemeProvider>;
+  useEffect(() => {
+    initializeStylePreset();
+  }, []);
+
+  return <NextThemeProvider attribute="class" defaultTheme="light" enableSystem {...props}>{children}</NextThemeProvider>;
 }

@@ -20,6 +20,17 @@ const messageCreateSchema = z.object({
   content: z.string().min(1),
   channelId: z.string().min(1),
   senderId: z.string().optional(),
+  threadParentId: z.string().optional(),
+  voiceUrl: z.string().url().optional(),
+  duration: z.number().positive().optional(),
+  attachments: z.array(z.object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    url: z.string().min(1),
+    size: z.number().nonnegative(),
+    type: z.string().min(1)
+  })).optional(),
+  mentions: z.array(z.string()).optional()
 });
 
 const channelCreateSchema = z.object({
@@ -149,15 +160,24 @@ export const registerResourceRoutes = async (fastify: FastifyInstance, mongoServ
       const messageId = `msg_${nanoid(12)}`;
       const now = new Date();
 
-      const message: Message = {
+      const message = {
         id: messageId,
         channelId,
         senderId: senderId || 'system',
         content,
-        attachments: [],
+        threadParentId: validation.data.threadParentId ?? null,
+        attachments: validation.data.attachments ?? [],
+        mentions: validation.data.mentions ?? [],
+        readBy: [senderId || 'system'],
+        reactions: [],
+        pinned: false,
+        editedAt: null,
+        deletedAt: null,
+        voiceUrl: validation.data.voiceUrl,
+        duration: validation.data.duration,
         createdAt: now,
         updatedAt: now,
-      };
+      } as unknown as Message;
 
       const created = await mongoService.createMessage(message);
       realtimeHub.broadcast({ type: 'state.invalidated', timestamp: new Date().toISOString() });

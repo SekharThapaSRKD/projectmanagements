@@ -102,7 +102,19 @@ export interface Message {
   content: string;
   senderId: string;
   channelId: string;
+  threadParentId?: string | null;
+  mentions?: string[];
+  readBy?: string[];
+  pinned?: boolean;
+  reactions?: {
+    emoji: string;
+    userIds: string[];
+    count: number;
+  }[];
+  editedAt?: string | null;
+  deletedAt?: string | null;
   createdAt: string;
+  updatedAt: string;
   voiceUrl?: string;
   duration?: number;
   attachments?: {
@@ -116,9 +128,34 @@ export interface Message {
 
 export interface Channel {
   id: string;
+  workspaceId?: string;
+  projectId?: string;
   name: string;
   type: ChannelType;
   relatedId: string;
+  description?: string;
+  isPrivate?: boolean;
+  memberIds?: string[];
+  lastMessageAt?: string;
+}
+
+export interface DirectMessageRoom {
+  id: string;
+  memberIds: string[];
+  lastMessageId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FileAttachment {
+  id: string;
+  messageId?: string;
+  name: string;
+  url: string;
+  size: number;
+  mimeType: string;
+  uploadedBy: string;
+  createdAt: string;
 }
 
 export interface Document {

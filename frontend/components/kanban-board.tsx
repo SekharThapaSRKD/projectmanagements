@@ -3,12 +3,12 @@
 import { DndContext, DragEndEvent, KeyboardSensor, PointerSensor, closestCenter, closestCorners, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Plus, SquareKanban, MessageCircle, Code2, Hash, Clock, Flame, Circle, Settings, Paperclip } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { GripVertical, Plus, SquareKanban, MessageCircle, Code2, Hash, Clock, Flame, Circle, Settings, Paperclip, Search, Filter, Eye, EyeOff } from 'lucide-react';
+import { useMemo, useState, useRef } from 'react';
 import { useAppStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { Task, TaskStatus } from '@/lib/types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { CustomColumnsDialog } from './custom-columns-dialog';
 
 type KanbanBoardProps = {
@@ -111,7 +111,21 @@ function TaskCard({ task, onTaskClick }: { task: Task; onTaskClick: (task: Task)
   );
 }
 
-function DroppableColumn({ columnId, title, tasks, onTaskClick, onCreateTask }: { columnId: string; title: string; tasks: Task[]; onTaskClick: (task: Task) => void; onCreateTask: () => void }) {
+function DroppableColumn({ 
+  columnId, 
+  title, 
+  tasks, 
+  onTaskClick, 
+  onCreateTask,
+  customEmptyState
+}: { 
+  columnId: string; 
+  title: string; 
+  tasks: Task[]; 
+  onTaskClick: (task: Task) => void; 
+  onCreateTask: () => void;
+  customEmptyState?: React.ReactNode;
+}) {
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({ id: columnId });
   const {
     setNodeRef: setSortableRef,
@@ -183,9 +197,17 @@ function DroppableColumn({ columnId, title, tasks, onTaskClick, onCreateTask }: 
           {tasks.map(task => <TaskCard key={task.id} task={task} onTaskClick={onTaskClick} />)}
           
           {tasks.length === 0 && (
-            <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-[hsl(var(--border-soft))] p-8 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--muted))]">No tasks</p>
-            </div>
+            customEmptyState || (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-[hsl(var(--border-soft))] p-8 text-center hover:border-[hsl(var(--border))] transition-colors"
+            >
+              <Circle className="h-8 w-8 mb-3 text-[hsl(var(--muted))] opacity-40" />
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[hsl(var(--muted))]">No tasks yet</p>
+              <p className="text-[10px] text-[hsl(var(--muted))] mt-1">Create a new task or move from other columns</p>
+            </motion.div>
+            )
           )}
         </div>
       </SortableContext>
@@ -197,6 +219,13 @@ export function KanbanBoard({ onTaskClick, filterSprintId = null, onCreateTask }
   const { tasks, activeProjectId, sprints, moveTask, projects, updateProject } = useAppStore();
   const project = projects.find(item => item.id === activeProjectId);
   const [isCustomColumnsDialogOpen, setIsCustomColumnsDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedPriorities, setSelectedPriorities] = useState<string[]>(['urgent', 'high', 'medium', 'low']);
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const [showMemberFilter, setShowMemberFilter] = useState(false);
+  const [hideEmptyColumns, setHideEmptyColumns] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Get columns from project, fallback to default
   const [columns, setColumns] = useState(
@@ -209,7 +238,7 @@ export function KanbanBoard({ onTaskClick, filterSprintId = null, onCreateTask }
   );
 
   const boardTasks = useMemo(() => {
-    return tasks.filter(task => {
+    let filteredTasks = tasks.filter(task => {
       if (task.projectId !== activeProjectId) return false;
       
       if (filterSprintId != null) {
@@ -217,25 +246,38 @@ export function KanbanBoard({ onTaskClick, filterSprintId = null, onCreateTask }
       }
       
       if (project?.type === 'scrum') {
-        // For scrum projects: only show backlog + active sprint tasks
-        // Hide tasks from planning sprints (they're not on the board yet)
-        if (!task.sprintId) {
-          // Backlog task - always visible
-          return true;
-        }
+        // For scrum projects: only show active sprint tasks on the board
+        const activeSprint = sprints.find(s => s.projectId === activeProjectId && s.status === 'active');
+        if (!activeSprint) return false; // No active sprint, show nothing on the board
         
-        // Check sprint status - only show active sprints
-        const sprint = sprints.find(s => s.id === task.sprintId);
-        if (!sprint) return true; // If sprint not found, show task (fallback)
-        
-        // Only show tasks from active or completed sprints
-        // Hide tasks from planning sprints
-        return sprint.status === 'active' || sprint.status === 'completed';
+        return task.sprintId === activeSprint.id;
       }
       
       return true;
     });
-  }, [activeProjectId, filterSprintId, tasks, project?.type, sprints]);
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filteredTasks = filteredTasks.filter(task => 
+        task.title.toLowerCase().includes(query) ||
+        task.description?.toLowerCase().includes(query) ||
+        task.labels?.some(label => label.toLowerCase().includes(query))
+      );
+    }
+
+    // Apply priority filter
+    filteredTasks = filteredTasks.filter(task => selectedPriorities.includes(task.priority));
+
+    // Apply assignee filter
+    if (selectedAssignees.length > 0) {
+      filteredTasks = filteredTasks.filter(task => 
+        task.assigneeId ? selectedAssignees.includes(task.assigneeId) : false
+      );
+    }
+
+    return filteredTasks;
+  }, [activeProjectId, filterSprintId, tasks, project?.type, sprints, searchQuery, selectedPriorities, selectedAssignees]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -296,6 +338,9 @@ export function KanbanBoard({ onTaskClick, filterSprintId = null, onCreateTask }
     );
   }
 
+  const activeSprint = sprints.find(s => s.projectId === activeProjectId && s.status === 'active');
+  const isScrumWithoutActiveSprint = project?.type === 'scrum' && !activeSprint;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 rounded-[32px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] p-8 shadow-sm">
@@ -322,18 +367,129 @@ export function KanbanBoard({ onTaskClick, filterSprintId = null, onCreateTask }
       </div>
 
       <DndContext collisionDetection={closestCorners} sensors={sensors} onDragEnd={handleDragEnd}>
+        {/* Search and Filter Bar */}
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row gap-3 rounded-[24px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-panel)/0.5)] p-4 backdrop-blur-sm"
+        >
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[hsl(var(--muted))]" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search tasks by title, description, or labels..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-lg bg-[hsl(var(--bg-soft))] border border-[hsl(var(--border-soft))] text-sm text-[hsl(var(--text))] placeholder-[hsl(var(--muted))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent)/0.5)] transition-all"
+            />
+          </div>
+
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 border',
+              showFilters
+                ? 'bg-[hsl(var(--accent)/0.15)] border-[hsl(var(--accent)/0.3)] text-[hsl(var(--accent))]'
+                : 'bg-[hsl(var(--bg-soft))] border-[hsl(var(--border-soft))] text-[hsl(var(--muted))] hover:text-[hsl(var(--text))]'
+            )}
+          >
+            <Filter className="h-4 w-4" />
+            Filters
+          </button>
+
+          <button
+            onClick={() => setHideEmptyColumns(!hideEmptyColumns)}
+            className={cn(
+              'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 border',
+              hideEmptyColumns
+                ? 'bg-[hsl(var(--accent)/0.15)] border-[hsl(var(--accent)/0.3)] text-[hsl(var(--accent))]'
+                : 'bg-[hsl(var(--bg-soft))] border-[hsl(var(--border-soft))] text-[hsl(var(--muted))] hover:text-[hsl(var(--text))]'
+            )}
+          >
+            {hideEmptyColumns ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+          </button>
+        </motion.div>
+
+        {/* Expanded Filter Panel */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="rounded-[24px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-panel)/0.5)] p-4 backdrop-blur-sm space-y-4"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Priority Filter */}
+                <div>
+                  <label className="block text-sm font-semibold text-[hsl(var(--text))] mb-2">Priority</label>
+                  <div className="flex flex-wrap gap-2">
+                    {['urgent', 'high', 'medium', 'low'].map(priority => (
+                      <button
+                        key={priority}
+                        onClick={() => {
+                          if (selectedPriorities.includes(priority)) {
+                            setSelectedPriorities(selectedPriorities.filter(p => p !== priority));
+                          } else {
+                            setSelectedPriorities([...selectedPriorities, priority]);
+                          }
+                        }}
+                        className={cn(
+                          'px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-all border',
+                          selectedPriorities.includes(priority)
+                            ? 'bg-[hsl(var(--accent)/0.15)] border-[hsl(var(--accent)/0.3)] text-[hsl(var(--accent))]'
+                            : 'bg-[hsl(var(--bg-soft))] border-[hsl(var(--border-soft))] text-[hsl(var(--muted))]'
+                        )}
+                      >
+                        {priority}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <SortableContext items={columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
-            {columns.map(column => (
-              <DroppableColumn
-                key={column.id}
-                columnId={column.id}
-                title={column.title}
-                tasks={boardTasks.filter(task => task.status === column.id)}
-                onTaskClick={onTaskClick}
-                onCreateTask={onCreateTask}
-              />
-            ))}
+            {columns.map(column => {
+              const columnTasks = boardTasks.filter(task => task.status === column.id);
+              const shouldHide = hideEmptyColumns && columnTasks.length === 0;
+              
+              return !shouldHide ? (
+                <DroppableColumn
+                  key={column.id}
+                  columnId={column.id}
+                  title={column.title}
+                  tasks={columnTasks}
+                  onTaskClick={onTaskClick}
+                  onCreateTask={onCreateTask}
+                  customEmptyState={
+                    isScrumWithoutActiveSprint && index === 0 ? (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-blue-500/20 bg-blue-500/5 p-6 text-center hover:border-blue-500/40 transition-colors"
+                      >
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-500/10 text-blue-500 mb-4 shadow-sm">
+                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" /><path d="M16 16h5v5" /></svg>
+                        </div>
+                        <h3 className="text-sm font-bold text-[hsl(var(--text))]">Get started in the backlog</h3>
+                        <p className="text-xs text-[hsl(var(--muted))] mt-1 mb-5">Plan and start a sprint to see work here.</p>
+                        <button 
+                          onClick={() => useAppStore.getState().setActiveView('backlog')}
+                          className="px-4 py-2 bg-[hsl(var(--bg-panel))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--bg-soft))] text-[hsl(var(--text))] text-xs font-bold rounded-lg shadow-sm transition-all"
+                        >
+                          Go to Backlog
+                        </button>
+                      </motion.div>
+                    ) : undefined
+                  }
+                />
+              ) : null;
+            })}
           </SortableContext>
         </div>
       </DndContext>

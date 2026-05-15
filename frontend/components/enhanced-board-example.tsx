@@ -18,6 +18,7 @@ import {
   StoryPointsSummary
 } from '@/components/estimation-features';
 import { applyAdvancedFilter, type FilterCondition, type SavedFilter } from '@/lib/advanced-filters';
+import type { Priority, Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 /**
@@ -35,7 +36,7 @@ export function EnhancedBoardExample() {
     activeSprintId,
     updateTask,
     deleteTask,
-    createTask,
+    addTask,
     addTaskToSprint,
     removeTaskFromSprint
   } = useAppStore();
@@ -45,7 +46,7 @@ export function EnhancedBoardExample() {
   const [activeFilters, setActiveFilters] = useState<FilterCondition[]>([]);
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
   const [showWIPDialog, setShowWIPDialog] = useState(false);
-  const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [estimationMode, setEstimationMode] = useState<'modal' | 'poker' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState<'board' | 'backlog'>('board');
@@ -90,12 +91,20 @@ export function EnhancedBoardExample() {
     // Call API: DELETE /api/v1/tasks/:id
   }, [deleteTask]);
 
+  const handleBacklogTaskMove = useCallback((taskId: string, toSprintId: string | null) => {
+    if (toSprintId === null) {
+      removeTaskFromSprint(taskId);
+    } else {
+      addTaskToSprint(taskId, toSprintId);
+    }
+  }, [addTaskToSprint, removeTaskFromSprint]);
+
   const handleAssign = useCallback((taskId: string, memberId: string) => {
     updateTask(taskId, { assigneeId: memberId });
   }, [updateTask]);
 
   const handleChangePriority = useCallback((taskId: string, priority: string) => {
-    updateTask(taskId, { priority });
+    updateTask(taskId, { priority: priority as Priority });
   }, [updateTask]);
 
   const handleChangeStatus = useCallback((taskId: string, status: string) => {
@@ -114,8 +123,8 @@ export function EnhancedBoardExample() {
   const handleLogTime = useCallback((taskId: string, hours: number) => {
     const task = tasks.find(t => t.id === taskId);
     if (task) {
-      const current = task.timeLogged || 0;
-      updateTask(taskId, { timeLogged: current + hours });
+      const current = task.timeSpent || 0;
+      updateTask(taskId, { timeSpent: current + hours });
     }
   }, [tasks, updateTask]);
 
@@ -233,9 +242,23 @@ export function EnhancedBoardExample() {
                       />
                     </div>
                   )}
-                  renderColumnHeader={(status) => (
-                    <div className="font-semibold text-[hsl(var(--text))] capitalize">
-                      {status.replace('_', ' ')}
+                  renderColumn={(status, tasks) => (
+                    <div className="space-y-2">
+                      <div className="font-semibold text-[hsl(var(--text))] capitalize px-2">
+                        {status.replace('_', ' ')} ({tasks.length})
+                      </div>
+                      <div className="space-y-2">
+                        {tasks.map((task) => (
+                          <div key={task.id} className="cursor-pointer" onClick={() => setSelectedTask(task)}>
+                            <div className="bg-[hsl(var(--bg-panel))] rounded-lg p-3 border border-[hsl(var(--border))]">
+                              <p className="text-sm font-medium text-[hsl(var(--text))]">{task.title}</p>
+                              {task.description && (
+                                <p className="text-xs text-[hsl(var(--muted))] mt-1 line-clamp-2">{task.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 />
@@ -258,11 +281,11 @@ export function EnhancedBoardExample() {
                 tasks={tasks.filter(t => t.projectId === activeProjectId)}
                 sprints={sprints}
                 members={members}
-                onTaskMove={addTaskToSprint}
+                onTaskMove={handleBacklogTaskMove}
                 onTaskDelete={handleTaskDelete}
                 onTaskClick={(task) => setSelectedTask(task)}
                 onCreateTask={(title) => {
-                  createTask({
+                  addTask({
                     title,
                     projectId: activeProjectId,
                     status: 'todo'

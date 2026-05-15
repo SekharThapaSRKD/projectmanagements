@@ -124,6 +124,65 @@ export class StripeService {
     });
   }
 
+  // Create checkout session for subscription purchase
+  async createCheckoutSession(input: {
+    customerId: string;
+    successUrl: string;
+    cancelUrl: string;
+    priceId?: string;
+    amountCents?: number;
+    planName: string;
+    planId: 'pro' | 'enterprise';
+    accountId: string;
+  }) {
+    const { customerId, successUrl, cancelUrl, priceId, amountCents, planName, planId, accountId } = input;
+
+    if (!priceId && (!amountCents || amountCents <= 0)) {
+      throw new Error('Either priceId or valid amountCents must be provided');
+    }
+
+    let lineItem: Stripe.Checkout.SessionCreateParams.LineItem;
+    const hasRealStripePriceId = Boolean(priceId && /^price_[A-Za-z0-9]+$/.test(priceId));
+
+    if (hasRealStripePriceId && priceId) {
+      lineItem = { price: priceId, quantity: 1 };
+    } else {
+      lineItem = {
+        price_data: {
+          currency: 'usd',
+          product_data: { name: `${planName} Plan` },
+          recurring: { interval: 'month' },
+          unit_amount: amountCents as number,
+        },
+        quantity: 1,
+      };
+    }
+
+    return this.stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: customerId,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      line_items: [lineItem],
+      metadata: {
+        planId,
+        accountId,
+      },
+      subscription_data: {
+        metadata: {
+          planId,
+          accountId,
+        },
+      },
+    });
+  }
+
+  async getCheckoutSession(sessionId: string) {
+    return this.stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['subscription'],
+    });
+  }
+
   // Verify webhook signature
   verifyWebhookSignature(body: Buffer, signature: string): Stripe.Event {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
