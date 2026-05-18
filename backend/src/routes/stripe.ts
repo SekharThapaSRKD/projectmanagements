@@ -272,27 +272,37 @@ export const registerStripeRoutes = async (
             const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
             if (!existing) {
-              await mongoService.createSubscription({
+              const subscriptionData: Omit<Subscription, '_id'> = {
                 id: `sub_${nanoid(12)}`,
                 accountId,
                 plan: planId,
                 status: 'active',
-                stripeCustomerId: customerId,
-                stripeSubscriptionId,
                 currentPeriodStart: now,
                 currentPeriodEnd: nextMonth,
                 cancelAtPeriodEnd: false,
                 createdAt: now,
                 updatedAt: now,
-              });
+              };
+              if (customerId) {
+                subscriptionData.stripeCustomerId = customerId;
+              }
+              if (stripeSubscriptionId) {
+                subscriptionData.stripeSubscriptionId = stripeSubscriptionId;
+              }
+              await mongoService.createSubscription(subscriptionData);
             } else {
-              await mongoService.updateSubscription(existing.id, {
+              const updates: Partial<Subscription> = {
                 plan: planId,
                 status: 'active',
-                stripeCustomerId: customerId,
-                stripeSubscriptionId,
                 cancelAtPeriodEnd: false,
-              });
+              };
+              if (customerId) {
+                updates.stripeCustomerId = customerId;
+              }
+              if (stripeSubscriptionId) {
+                updates.stripeSubscriptionId = stripeSubscriptionId;
+              }
+              await mongoService.updateSubscription(existing.id, updates);
             }
 
             await mongoService.updateAccount(accountId, {
