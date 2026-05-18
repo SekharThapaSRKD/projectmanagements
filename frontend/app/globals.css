@@ -37,6 +37,34 @@ html.light {
   --shadow: 220 14% 58%;
 }
 
+html.light [class*='text-white'] {
+  color: hsl(var(--text)) !important;
+}
+
+html.light [class*='placeholder:text-white']::placeholder {
+  color: hsl(var(--muted)) !important;
+}
+
+html.light [class*='border-white'] {
+  border-color: hsl(var(--border-soft)) !important;
+}
+
+html.light [class*='bg-white'] {
+  background-color: hsl(var(--bg-elevated)) !important;
+}
+
+html.light [class*='from-white'] {
+  --tw-gradient-from: hsl(var(--bg-elevated)) var(--tw-gradient-from-position);
+}
+
+html.light [class*='to-white'] {
+  --tw-gradient-to: hsl(var(--bg-soft)) var(--tw-gradient-to-position);
+}
+
+html.light [class*='via-white'] {
+  --tw-gradient-via: hsl(var(--bg-panel)) var(--tw-gradient-via-position);
+}
+
 html[data-style-preset='classic'] {
   --accent: 216 87% 47%;
   --accent-2: 192 80% 41%;

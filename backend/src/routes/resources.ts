@@ -180,6 +180,8 @@ export const registerResourceRoutes = async (fastify: FastifyInstance, mongoServ
       } as unknown as Message;
 
       const created = await mongoService.createMessage(message);
+      // Broadcast the new message for realtime clients and also signal a state invalidation
+      realtimeHub.broadcast({ type: 'message:created', data: created, timestamp: new Date().toISOString() });
       realtimeHub.broadcast({ type: 'state.invalidated', timestamp: new Date().toISOString() });
       return reply.status(201).send(created);
     }

@@ -13,7 +13,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center text-white">
+        <main className="flex min-h-screen items-center justify-center bg-[hsl(var(--bg))] text-[hsl(var(--text))]">
           Loading authentication...
         </main>
       }
@@ -208,7 +208,7 @@ function LoginContent() {
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md"
             style={overlayStyle}
           >
-            <div className="w-full max-w-md rounded-lg bg-[rgba(0,0,0,0.45)] p-6">
+            <div className="w-full max-w-md rounded-lg border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] p-6 text-[hsl(var(--text))] shadow-2xl">
               <div className="flex items-center gap-4">
                 <div className="relative flex h-14 w-14 items-center justify-center">
                   <div className="h-14 w-14 animate-spin rounded-full border-4 border-[hsl(var(--accent)/0.12)] border-t-[hsl(var(--accent))]" />
@@ -218,7 +218,7 @@ function LoginContent() {
                 </div>
 
                 <div className="flex-1 text-left">
-                  <h3 className="text-lg font-extrabold uppercase tracking-wide text-white">Logging in</h3>
+                  <h3 className="text-lg font-extrabold uppercase tracking-wide text-[hsl(var(--text))]">Logging in</h3>
 
                   <div className="mt-1 h-5">
                     <AnimatePresence mode="wait">
@@ -243,7 +243,7 @@ function LoginContent() {
                       />
                     </div>
 
-                    <div className="w-12 text-right text-sm font-bold text-white">{Math.round(progressPercent)}%</div>
+                    <div className="w-12 text-right text-sm font-bold text-[hsl(var(--text))]">{Math.round(progressPercent)}%</div>
                   </div>
                 </div>
               </div>
@@ -272,15 +272,15 @@ function LoginContent() {
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(var(--accent))] to-[hsl(var(--accent)/0.6)] text-black shadow-lg shadow-[hsl(var(--accent)/0.2)]">
                 <Command className="h-6 w-6" />
               </div>
-              <h1 className="text-2xl font-black uppercase tracking-tighter text-white italic">TeamFlow</h1>
+              <h1 className="text-2xl font-black uppercase tracking-tighter text-[hsl(var(--text))] italic">TeamFlow</h1>
             </div>
 
             <div className="mt-20 max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-[hsl(var(--muted))] mb-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))/0.72] px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-[hsl(var(--muted))] mb-6">
                 <Sparkles className="h-3.5 w-3.5 text-[hsl(var(--accent))]" />
                 {authMode === 'real' ? 'Real-Time Sync Active' : 'Connect Backend to Continue'}
               </div>
-              <h2 className="mt-0 text-6xl font-black leading-[1] tracking-tighter text-white lg:text-7xl xl:text-8xl">
+              <h2 className="mt-0 text-6xl font-black leading-[1] tracking-tighter text-[hsl(var(--text))] lg:text-7xl xl:text-8xl">
                 RUN YOUR <span className="text-[hsl(var(--accent))]">TEAM</span> FROM ONE CALM CORE.
               </h2>
               <p className="mt-8 max-w-xl text-xl leading-relaxed text-[hsl(var(--muted))]">
@@ -300,21 +300,21 @@ function LoginContent() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className="group relative overflow-hidden rounded-[28px] border border-white/10 bg-white/5 p-5 transition-all hover:bg-white/[0.08]"
+                className="group relative overflow-hidden rounded-[28px] border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))/0.72] p-5 transition-all hover:bg-[hsl(var(--bg-elevated))/0.88]"
               >
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-[hsl(var(--muted))] transition-colors group-hover:bg-[hsl(var(--accent)/0.1)] group-hover:text-[hsl(var(--accent))]">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(var(--bg-soft))] text-[hsl(var(--muted))] transition-colors group-hover:bg-[hsl(var(--accent)/0.1)] group-hover:text-[hsl(var(--accent))]">
                   <feature.icon className="h-5 w-5" />
                 </div>
-                <h3 className="font-bold text-sm text-white">{feature.title}</h3>
+                <h3 className="font-bold text-sm text-[hsl(var(--text))]">{feature.title}</h3>
                 <p className="mt-1 text-xs leading-snug text-[hsl(var(--muted))]">{feature.body}</p>
               </motion.article>
             ))}
           </div>
 
-          <div className="relative z-10 flex items-center justify-between border-t border-white/10 pt-6 mt-6 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--muted))]">
+          <div className="relative z-10 flex items-center justify-between border-t border-[hsl(var(--border-soft))] pt-6 mt-6 text-[10px] font-black uppercase tracking-widest text-[hsl(var(--muted))]">
             <div className="flex items-center gap-6">
               <span>© 2026 TEAMFLOW.RUN</span>
-              <span className="h-1 w-1 rounded-full bg-white/10" />
+              <span className="h-1 w-1 rounded-full bg-[hsl(var(--border-soft))]" />
               <span>PRODUCTION v4.2.0</span>
             </div>
             <div className="flex items-center gap-4">
@@ -332,10 +332,10 @@ function LoginContent() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(var(--accent))] text-black">
                   <Command className="h-5 w-5" />
                 </div>
-                <h1 className="text-xl font-black uppercase tracking-tighter text-white">TeamFlow</h1>
+                <h1 className="text-xl font-black uppercase tracking-tighter text-[hsl(var(--text))]">TeamFlow</h1>
               </div>
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[hsl(var(--muted))]">Authentication</p>
-              <h2 className="mt-2 text-4xl font-black tracking-tighter text-white">ACCESS PORTAL</h2>
+              <h2 className="mt-2 text-4xl font-black tracking-tighter text-[hsl(var(--text))]">ACCESS PORTAL</h2>
             </div>
 
             <div className="space-y-4">
@@ -349,16 +349,16 @@ function LoginContent() {
                     key={provider.id}
                     type="button" 
                     onClick={() => handleOAuth(provider.id as OAuthProvider)} 
-                    className="flex h-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 transition-all hover:bg-white/10 active:scale-95"
+                    className="flex h-12 items-center justify-center rounded-xl border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))/0.72] transition-all hover:bg-[hsl(var(--bg-elevated))/0.9] active:scale-95"
                     title={`Sign in with ${provider.label}`}
                   >
-                    <provider.icon className="h-5 w-5 text-white/60" />
+                    <provider.icon className="h-5 w-5 text-[hsl(var(--muted))]" />
                   </button>
                 ))}
               </div>
 
               <div className="relative my-6 flex items-center justify-center">
-                <span className="h-px w-full bg-white/10" />
+                <span className="h-px w-full bg-[hsl(var(--border-soft))]" />
                 <span className="absolute bg-[hsl(var(--bg))] px-4 text-[10px] font-black uppercase tracking-[0.3em] text-[hsl(var(--muted))]">
                   Or use protocol
                 </span>
@@ -390,7 +390,7 @@ function LoginContent() {
                           value={name}
                           onChange={event => setName(event.target.value)}
                           placeholder="Olivia Carter"
-                          className="w-full h-12 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-[hsl(var(--accent)/0.5)] focus:ring-4 focus:ring-[hsl(var(--accent)/0.05)] transition-all"
+                          className="w-full h-12 rounded-xl border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] px-4 py-3 text-sm text-[hsl(var(--text))] outline-none placeholder:text-[hsl(var(--muted))] focus:border-[hsl(var(--accent)/0.5)] focus:ring-4 focus:ring-[hsl(var(--accent)/0.05)] transition-all"
                         />
                       </div>
                     )}
@@ -402,7 +402,7 @@ function LoginContent() {
                         onChange={event => setEmail(event.target.value)}
                         type="email"
                         placeholder="name@company.com"
-                        className="w-full h-12 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-[hsl(var(--accent)/0.5)] focus:ring-4 focus:ring-[hsl(var(--accent)/0.05)] transition-all"
+                        className="w-full h-12 rounded-xl border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] px-4 py-3 text-sm text-[hsl(var(--text))] outline-none placeholder:text-[hsl(var(--muted))] focus:border-[hsl(var(--accent)/0.5)] focus:ring-4 focus:ring-[hsl(var(--accent)/0.05)] transition-all"
                       />
                     </div>
 
@@ -414,7 +414,7 @@ function LoginContent() {
                           onChange={event => setPassword(event.target.value)}
                           type="password"
                           placeholder="••••••••"
-                          className="w-full h-12 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-[hsl(var(--accent)/0.5)] focus:ring-4 focus:ring-[hsl(var(--accent)/0.05)] transition-all"
+                          className="w-full h-12 rounded-xl border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] px-4 py-3 text-sm text-[hsl(var(--text))] outline-none placeholder:text-[hsl(var(--muted))] focus:border-[hsl(var(--accent)/0.5)] focus:ring-4 focus:ring-[hsl(var(--accent)/0.05)] transition-all"
                         />
                       </div>
                     )}
@@ -427,7 +427,7 @@ function LoginContent() {
                           onChange={event => setTwoFactorCode(event.target.value)}
                           inputMode="numeric"
                           placeholder="Enter 6-digit code"
-                          className="w-full h-14 rounded-2xl border border-[hsl(var(--accent)/0.3)] bg-[hsl(var(--accent)/0.05)] px-5 text-sm text-white outline-none focus:ring-4 focus:ring-[hsl(var(--accent)/0.05)] transition-all"
+                          className="w-full h-14 rounded-2xl border border-[hsl(var(--accent)/0.3)] bg-[hsl(var(--accent)/0.05)] px-5 text-sm text-[hsl(var(--text))] outline-none placeholder:text-[hsl(var(--muted))] focus:ring-4 focus:ring-[hsl(var(--accent)/0.05)] transition-all"
                         />
                       </div>
                     )}
@@ -441,7 +441,7 @@ function LoginContent() {
                             onChange={event => setResetCode(event.target.value)}
                             inputMode="numeric"
                             placeholder="123456"
-                            className="w-full h-14 rounded-2xl border border-white/10 bg-white/5 px-5 text-sm text-white outline-none focus:border-[hsl(var(--accent)/0.5)] transition-all"
+                            className="w-full h-14 rounded-2xl border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] px-5 text-sm text-[hsl(var(--text))] outline-none placeholder:text-[hsl(var(--muted))] focus:border-[hsl(var(--accent)/0.5)] transition-all"
                           />
                         </div>
                         <div className="space-y-2">
@@ -451,7 +451,7 @@ function LoginContent() {
                             onChange={event => setResetNewPassword(event.target.value)}
                             type="password"
                             placeholder="••••••••"
-                            className="w-full h-14 rounded-2xl border border-white/10 bg-white/5 px-5 text-sm text-white outline-none focus:border-[hsl(var(--accent)/0.5)] transition-all"
+                            className="w-full h-14 rounded-2xl border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-elevated))] px-5 text-sm text-[hsl(var(--text))] outline-none placeholder:text-[hsl(var(--muted))] focus:border-[hsl(var(--accent)/0.5)] transition-all"
                           />
                         </div>
                       </div>
@@ -462,7 +462,7 @@ function LoginContent() {
                 <button 
                   type="submit" 
                   disabled={pending}
-                  className="group relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-white text-sm font-black uppercase tracking-widest text-black transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+                  className="group relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-[hsl(var(--text))] text-sm font-black uppercase tracking-widest text-[hsl(var(--bg))] transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
                 >
                   <span className="relative z-10 flex items-center gap-2">
                     {mode === 'login' 
@@ -470,7 +470,7 @@ function LoginContent() {
                       : mode === 'register' ? 'Register Unit' : 'Send Protocol'}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </span>
-                  <div className="absolute inset-0 -z-0 bg-gradient-to-r from-white to-[hsl(var(--accent))] opacity-0 transition-opacity group-hover:opacity-10" />
+                  <div className="absolute inset-0 -z-0 bg-gradient-to-r from-transparent to-[hsl(var(--accent))] opacity-0 transition-opacity group-hover:opacity-10" />
                 </button>
               </motion.form>
 
@@ -479,17 +479,17 @@ function LoginContent() {
                   {mode === 'login' ? (
                     <>
                       <span>Don't have access?</span>
-                      <button onClick={() => setMode('register')} className="text-white hover:text-[hsl(var(--accent))] transition-colors">Request Account</button>
+                      <button onClick={() => setMode('register')} className="text-[hsl(var(--text))] hover:text-[hsl(var(--accent))] transition-colors">Request Account</button>
                     </>
                   ) : (
                     <>
                       <span>Already authorized?</span>
-                      <button onClick={() => setMode('login')} className="text-white hover:text-[hsl(var(--accent))] transition-colors">Sign in here</button>
+                      <button onClick={() => setMode('login')} className="text-[hsl(var(--text))] hover:text-[hsl(var(--accent))] transition-colors">Sign in here</button>
                     </>
                   )}
                 </div>
                 {mode === 'login' && (
-                  <button onClick={() => setMode('forgot')} className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--muted))] hover:text-white transition-colors">
+                  <button onClick={() => setMode('forgot')} className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--muted))] hover:text-[hsl(var(--text))] transition-colors">
                     Emergency: Forgot Password?
                   </button>
                 )}

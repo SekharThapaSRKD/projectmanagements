@@ -116,11 +116,17 @@ export const useAuthStore = create<AuthState>()(
           return;
         }
 
-        const response = await fetch(`${baseUrl}/api/v1/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        let response: Response;
+        try {
+          response = await fetch(`${baseUrl}/api/v1/auth/me`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+        } catch (err) {
+          console.warn('Failed to reach auth provider:', err);
+          return;
+        }
 
         if (!response.ok) {
           return;

@@ -947,9 +947,26 @@ export const useAppStore = create<AppState>()(
         }));
         
         void syncIfReal(() => deleteTeamFlowResource('boards', boardId));
-      },      startRealtimeSync: () => subscribeToTeamFlowInvalidations(() => {
-        void get().hydrateFromBackend();
-      }),
+      },
+      startRealtimeSync: () => {
+        const unsubscribe = subscribeToTeamFlowInvalidations(
+          () => {
+            void get().hydrateFromBackend();
+          },
+          (event) => {
+            if (!event || !event.type) return;
+            if (event.type === 'message:created' && event.data) {
+              set(state => ({ messages: [event.data, ...state.messages] }));
+              return;
+            }
+            if (event.type === 'state.invalidated') {
+              void get().hydrateFromBackend();
+            }
+          }
+        );
+
+        return unsubscribe;
+      },
       resetAppData: () =>
         set(() => ({
           ...createEmptySeedData(),

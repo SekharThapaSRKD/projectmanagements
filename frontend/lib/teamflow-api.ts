@@ -15,15 +15,20 @@ const requestJson = async <T>(path: string, init: RequestInit = {}): Promise<T> 
   // Get auth token from localStorage
   const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-      ...(init.headers ?? {})
-    },
-    cache: 'no-store'
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...(init.headers ?? {})
+      },
+      cache: 'no-store'
+    });
+  } catch (err) {
+    throw new Error(`Network error contacting TeamFlow backend at ${baseUrl}${path}: ${err instanceof Error ? err.message : String(err)}`);
+  }
 
   if (!response.ok) {
     const message = await response.text();
@@ -72,14 +77,36 @@ export const addTaskComment = async (taskId: string, content: string, authorId?:
     body: JSON.stringify({ content, authorId })
   });
 
-export const subscribeToTeamFlowInvalidations = (onInvalidate: () => void) => {
+export const subscribeToTeamFlowInvalidations = (
+  onInvalidate: () => void,
+  onEvent?: (event: { type: string; data?: any; timestamp?: string }) => void
+) => {
   const baseUrl = getTeamFlowApiBase();
   if (!baseUrl || typeof EventSource === 'undefined') {
     return () => undefined;
   }
 
   const source = new EventSource(`${baseUrl}/api/v1/realtime/events`);
+
   source.addEventListener('state.invalidated', () => onInvalidate());
+  source.addEventListener('message:created', (e: MessageEvent) => {
+    try {
+      const parsed = JSON.parse(e.data);
+      onEvent?.(parsed);
+    } catch {
+      // ignore parse errors
+    }
+  });
+
+  // Also forward other generic events to onEvent
+  source.addEventListener('connected', (e: MessageEvent) => {
+    try {
+      const parsed = JSON.parse(e.data);
+      onEvent?.(parsed);
+    } catch {
+      // ignore
+    }
+  });
 
   return () => source.close();
 };
@@ -123,13 +150,18 @@ export const uploadAvatar = async (file: File): Promise<{ success: boolean; avat
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch(`${baseUrl}/api/v1/uploads/avatar`, {
-    method: 'POST',
-    headers: {
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-    },
-    body: formData
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/api/v1/uploads/avatar`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: formData
+    });
+  } catch (err) {
+    throw new Error(`Network error uploading avatar to ${baseUrl}/api/v1/uploads/avatar: ${err instanceof Error ? err.message : String(err)}`);
+  }
 
   if (!response.ok) {
     const message = await response.text();

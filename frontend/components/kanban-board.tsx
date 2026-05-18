@@ -244,12 +244,13 @@ export function KanbanBoard({ onTaskClick, filterSprintId = null, onCreateTask }
       if (filterSprintId != null) {
         return task.sprintId === filterSprintId;
       }
-      
-      if (project?.type === 'scrum') {
-        // For scrum projects: only show active sprint tasks on the board
-        const activeSprint = sprints.find(s => s.projectId === activeProjectId && s.status === 'active');
-        if (!activeSprint) return false; // No active sprint, show nothing on the board
-        
+
+      const projectSprints = sprints.filter(sprint => sprint.projectId === activeProjectId);
+      const activeSprint = projectSprints.find(sprint => sprint.status === 'active');
+
+      if (projectSprints.length > 0) {
+        if (!activeSprint) return false;
+
         return task.sprintId === activeSprint.id;
       }
       
