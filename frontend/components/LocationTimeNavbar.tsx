@@ -161,8 +161,8 @@ export function LocationTimeNavbar() {
               animate={{ opacity: 1 }}
               className="flex items-center gap-2 text-[hsl(var(--muted))]"
             >
-              <AlertCircle className="h-3 w-3" />
-              <span>{status === 'denied' ? 'Location hidden' : 'Unavailable'}</span>
+              <MapPin className="h-3 w-3 opacity-60" />
+              <span>Cloud Workspace</span>
             </motion.div>
           )}
         </AnimatePresence>
