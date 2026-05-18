@@ -20,7 +20,10 @@ const envSchema = z.object({
   HOST: z.string().default('0.0.0.0'),
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
   MONGODB_URI: z.string().default('mongodb://localhost:27017/teamflow'),
-  JWT_SECRET: z.string().min(16).default('replace-me-with-a-long-random-secret'),
+  JWT_SECRET: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.string().min(16).default('replace-me-with-a-long-random-secret')
+  ),
   FRONTEND_URL: z.string().default('http://localhost:3000'),
   NEXTAUTH_URL: z.string().optional(),
   NEXTAUTH_SECRET: z.string().optional(),
