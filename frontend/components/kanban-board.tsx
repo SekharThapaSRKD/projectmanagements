@@ -249,8 +249,11 @@ export function KanbanBoard({ onTaskClick, filterSprintId = null, onCreateTask }
       const activeSprint = projectSprints.find(sprint => sprint.status === 'active');
 
       if (projectSprints.length > 0) {
-        if (!activeSprint) return false;
+        // Unscheduled backlog tasks (no sprintId) are always shown on the board
+        if (!task.sprintId) return true;
 
+        // Tasks in sprints are only shown if that sprint is active
+        if (!activeSprint) return false;
         return task.sprintId === activeSprint.id;
       }
       
@@ -456,7 +459,13 @@ export function KanbanBoard({ onTaskClick, filterSprintId = null, onCreateTask }
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <SortableContext items={columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
             {columns.map((column, index) => {
-              const columnTasks = boardTasks.filter(task => task.status === column.id);
+              const columnTasks = boardTasks.filter(task => {
+                const hasBacklogColumn = columns.some(col => col.id === 'backlog');
+                if (column.id === 'todo' && !hasBacklogColumn) {
+                  return task.status === 'todo' || task.status === 'backlog' || !task.status;
+                }
+                return task.status === column.id;
+              });
               const shouldHide = hideEmptyColumns && columnTasks.length === 0;
               
               return !shouldHide ? (
