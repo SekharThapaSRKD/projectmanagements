@@ -24,6 +24,7 @@ const envSchema = z.object({
     (val) => (val === '' ? undefined : val),
     z.string().min(16).default('replace-me-with-a-long-random-secret')
   ),
+  BACKEND_URL: z.string().default('http://localhost:4000'),
   FRONTEND_URL: z.string().default('http://localhost:3000'),
   NEXTAUTH_URL: z.string().optional(),
   NEXTAUTH_SECRET: z.string().optional(),

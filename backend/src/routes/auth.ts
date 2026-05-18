@@ -357,7 +357,7 @@ export const registerAuthRoutes = async (fastify: FastifyInstance, mongoService:
     const state = OAuthService.generateState();
     oauthStates.set(state, { provider: 'google', createdAt: Date.now() });
 
-    const redirectUri = `http://localhost:4000/api/v1/auth/google/callback`;
+    const redirectUri = `${env.BACKEND_URL}/api/v1/auth/google/callback`;
     const authUrl = await OAuthService.getGoogleAuthUrl(redirectUri, state);
 
     return reply.send({ authUrl });
@@ -380,7 +380,7 @@ export const registerAuthRoutes = async (fastify: FastifyInstance, mongoService:
       oauthStates.delete(state);
 
       try {
-        const redirectUri = `http://localhost:4000/api/v1/auth/google/callback`;
+        const redirectUri = `${env.BACKEND_URL}/api/v1/auth/google/callback`;
         const profile = await OAuthService.exchangeGoogleCode(code, redirectUri);
 
         // Find or create account
@@ -472,7 +472,7 @@ export const registerAuthRoutes = async (fastify: FastifyInstance, mongoService:
     const state = OAuthService.generateState();
     oauthStates.set(state, { provider: 'github', createdAt: Date.now() });
 
-    const redirectUri = `http://localhost:4000/api/v1/auth/github/callback`;
+    const redirectUri = `${env.BACKEND_URL}/api/v1/auth/github/callback`;
     const authUrl = await OAuthService.getGitHubAuthUrl(redirectUri, state);
 
     return reply.send({ authUrl });
@@ -495,7 +495,7 @@ export const registerAuthRoutes = async (fastify: FastifyInstance, mongoService:
       oauthStates.delete(state);
 
       try {
-        const redirectUri = `http://localhost:4000/api/v1/auth/github/callback`;
+        const redirectUri = `${env.BACKEND_URL}/api/v1/auth/github/callback`;
         const profile = await OAuthService.exchangeGitHubCode(code, redirectUri);
 
         // Find or create account
