@@ -192,7 +192,7 @@ export function AppSidebar({ onCreateTask, onCreateProject, onCreateBoard, onCre
         {/* Projects Section */}
         <div className="space-y-2">
           <div className="flex items-center justify-between px-3">
-            {sidebarOpen && <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--muted))]">Board</p>}
+            {sidebarOpen && <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--muted))]">Projects</p>}
             {sidebarOpen && canManageProjects && (
               <div className="flex gap-1">
                 <button

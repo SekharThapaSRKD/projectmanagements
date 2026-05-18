@@ -42,7 +42,7 @@ export function useRealtimePresence(userId: string) {
   });
 
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const presenceTrackerRef = useRef<NodeJS.Timeout>();
+  const presenceTrackerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Track mouse movement
   useEffect(() => {
@@ -295,7 +295,7 @@ export function usePresenceBroadcast(
   isEditing: boolean = false,
   editingTaskId: string = ''
 ) {
-  const broadcastInterval = useRef<NodeJS.Timeout>();
+  const broadcastInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     broadcastInterval.current = setInterval(() => {

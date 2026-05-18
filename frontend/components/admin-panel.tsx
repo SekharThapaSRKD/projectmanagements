@@ -149,18 +149,6 @@ export function AdminPanel() {
         return;
       }
 
-      if (data.sessionId) {
-        const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
-        if (!stripe) {
-          throw new Error('Stripe is not initialized. Check publishable key.');
-        }
-        const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
-        if (result.error) {
-          throw new Error(result.error.message || 'Stripe redirect failed');
-        }
-        return;
-      }
-
       throw new Error('Invalid checkout response from server');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An unexpected error occurred.';

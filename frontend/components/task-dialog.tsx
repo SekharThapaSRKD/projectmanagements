@@ -3,6 +3,7 @@
 import { Code2, Plus, Trash2, X, MessageSquare, Tag, AlignLeft, BarChart2, User, Layers, FileCode, CheckCircle2, Paperclip, Upload, Image as ImageIcon, FileText, Calendar } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppStore } from '@/lib/store';
+import { isTeamFlowApiConfigured, uploadFile } from '@/lib/teamflow-api';
 import type { CodeSnippet, Task } from '@/lib/types';
 import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -91,21 +92,50 @@ export function TaskDialog({ task, isNew, onClose }: TaskDialogProps) {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newAttachment = {
-          id: crypto.randomUUID(),
-          filename: file.name,
-          url: reader.result as string, // base64 for demo
-          size: file.size,
-          type: file.type,
-          uploadedAt: new Date().toISOString()
+    Array.from(files).forEach(async file => {
+      if (isTeamFlowApiConfigured()) {
+        try {
+          const res = await uploadFile(file);
+          const newAttachment = {
+            id: crypto.randomUUID(),
+            filename: res.filename || file.name,
+            url: res.url,
+            size: res.size ?? file.size,
+            type: res.mimeType ?? file.type,
+            uploadedAt: new Date().toISOString()
+          };
+          setAttachments(prev => [...prev, newAttachment]);
+        } catch (err) {
+          // fallback to local preview if upload fails
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const newAttachment = {
+              id: crypto.randomUUID(),
+              filename: file.name,
+              url: reader.result as string,
+              size: file.size,
+              type: file.type,
+              uploadedAt: new Date().toISOString()
+            };
+            setAttachments(prev => [...prev, newAttachment]);
+          };
+          reader.readAsDataURL(file);
+        }
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const newAttachment = {
+            id: crypto.randomUUID(),
+            filename: file.name,
+            url: reader.result as string, // base64 for demo
+            size: file.size,
+            type: file.type,
+            uploadedAt: new Date().toISOString()
+          };
+          setAttachments(prev => [...prev, newAttachment]);
         };
-        setAttachments(prev => [...prev, newAttachment]);
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      }
     });
   };
 

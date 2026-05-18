@@ -1,4 +1,4 @@
-import type { SeedData } from './types';
+import type { SeedData, Message } from './types';
 
 const cleanupBase = (baseUrl: string | undefined) => (baseUrl ? baseUrl.trim().replace(/\/$/, '') : '');
 
@@ -111,7 +111,7 @@ export const subscribeToTeamFlowInvalidations = (
   return () => source.close();
 };
 
-type ResourceName = 'workspaces' | 'projects' | 'sprints' | 'tasks' | 'members' | 'messages' | 'documents' | 'channels';
+type ResourceName = 'workspaces' | 'projects' | 'sprints' | 'tasks' | 'members' | 'messages' | 'documents' | 'channels' | 'boards';
 
 const resourcePath = (resource: ResourceName, id?: string) => `/api/v1/${resource}${id ? `/${id}` : ''}`;
 
@@ -161,6 +161,34 @@ export const uploadAvatar = async (file: File): Promise<{ success: boolean; avat
     });
   } catch (err) {
     throw new Error(`Network error uploading avatar to ${baseUrl}/api/v1/uploads/avatar: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || `Upload failed (${response.status}).`);
+  }
+
+  return await response.json();
+};
+
+export const uploadFile = async (file: File): Promise<{ success: boolean; url: string; filename: string; size?: number; mimeType?: string }> => {
+  const baseUrl = getTeamFlowApiBase();
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/api/v1/uploads/file`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: formData
+    });
+  } catch (err) {
+    throw new Error(`Network error uploading file to ${baseUrl}/api/v1/uploads/file: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   if (!response.ok) {

@@ -54,4 +54,39 @@ export const registerUploadRoutes = async (app: FastifyInstance, mongoService: M
       message: 'Avatar updated successfully' 
     };
   });
+
+  // Generic file upload endpoint - saves file to public/uploads and returns metadata
+  app.post('/api/v1/uploads/file', {
+    preHandler: [(app as any).authenticate]
+  }, async (request: any, reply) => {
+    const data = await request.file();
+    if (!data) {
+      return reply.code(400).send({ error: 'No file uploaded' });
+    }
+
+    const userId = request.user.id;
+    const extension = path.extname(data.filename) || '';
+    const filename = `${userId}-${nanoid(8)}${extension}`;
+    const uploadPath = path.join(__dirname, '../../public/uploads', filename);
+
+    // Ensure directory exists
+    const dir = path.dirname(uploadPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    await pipeline(data.file, fs.createWriteStream(uploadPath));
+
+    const protocol = request.protocol;
+    const host = request.hostname;
+    const fileUrl = `${protocol}://${host}/public/uploads/${filename}`;
+
+    return {
+      success: true,
+      url: fileUrl,
+      filename: data.filename,
+      size: data.file.truncated ? undefined : data.file.readableLength, // best-effort
+      mimeType: data.mimetype
+    };
+  });
 };

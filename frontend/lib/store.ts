@@ -41,6 +41,7 @@ type NewTaskInput = {
   title: string;
   description?: string;
   status?: TaskStatus;
+  type?: Task['type'];
   priority?: Priority;
   assigneeId?: string | null;
   labels?: string[];
@@ -48,6 +49,7 @@ type NewTaskInput = {
   sprintId?: string | null;
   devNotes?: string;
   codeSnippets?: Task['codeSnippets'];
+  backlogOrder?: number;
   // Professional features
   storyPoints?: number;
   timeEstimate?: number;
@@ -184,6 +186,7 @@ const createTask = (input: NewTaskInput, projectId: string): Task => {
     title: input.title,
     description: input.description ?? '',
     status,
+    type: input.type ?? 'task',
     priority: input.priority ?? 'medium',
     assigneeId: input.assigneeId ?? null,
     labels: input.labels ?? [],
@@ -192,6 +195,7 @@ const createTask = (input: NewTaskInput, projectId: string): Task => {
     sprintId: input.sprintId ?? null,
     codeSnippets: input.codeSnippets ?? [],
     devNotes: input.devNotes ?? '',
+    backlogOrder: input.backlogOrder ?? 0,
     createdAt: now,
     updatedAt: now
   };
@@ -267,6 +271,7 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: true,
       chatOpen: true,
       activeChannelId: '',
+      activeAdminTab: 'members',
       toasts: [],
       setActiveWorkspace: workspaceId => {
         set(state => {
@@ -349,7 +354,7 @@ export const useAppStore = create<AppState>()(
           const assignee = get().members.find(m => m.id === task.assigneeId);
           if (assignee) {
             get().addNotification({
-              type: 'assignment',
+              type: 'task_assigned',
               title: 'New Task Assigned',
               message: `You have been assigned to: ${task.title}`,
               link: task.id
@@ -369,7 +374,7 @@ export const useAppStore = create<AppState>()(
               const assignee = get().members.find(m => m.id === patch.assigneeId);
               if (assignee) {
                 get().addNotification({
-                  type: 'assignment',
+                  type: 'task_assigned',
                   title: 'Task Reassigned',
                   message: `You are now responsible for: ${currentTask.title}`,
                   link: taskId
@@ -489,7 +494,7 @@ export const useAppStore = create<AppState>()(
               projects: state.projects.filter(p => p.id !== projectId),
               channels: state.channels.filter(c => c.type !== 'project' || c.relatedId !== projectId),
               tasks: state.tasks.filter(t => t.projectId !== projectId),
-              activeProjectId: state.activeProjectId === projectId ? state.projects.find(p => p.id !== projectId && !p.isDeleted)?.id || null : state.activeProjectId
+              activeProjectId: state.activeProjectId === projectId ? state.projects.find(p => p.id !== projectId && !p.isDeleted)?.id || '' : state.activeProjectId
             };
           }
 
@@ -502,7 +507,7 @@ export const useAppStore = create<AppState>()(
 
           return {
             projects: updatedProjects,
-            activeProjectId: state.activeProjectId === projectId ? state.projects.find(p => p.id !== projectId && !p.isDeleted)?.id || null : state.activeProjectId
+            activeProjectId: state.activeProjectId === projectId ? state.projects.find(p => p.id !== projectId && !p.isDeleted)?.id || '' : state.activeProjectId
           };
         }),
       restoreProject: projectId =>
@@ -934,10 +939,10 @@ export const useAppStore = create<AppState>()(
           boards: state.boards.map(b => b.id === boardId ? { ...b, ...patch, updatedAt: new Date().toISOString() } : b)
         }));
         
-        void syncIfReal(() => {
+        void syncIfReal(async () => {
           const board = get().boards.find(b => b.id === boardId);
           if (board) {
-            void updateTeamFlowResource('boards', boardId, board);
+            await updateTeamFlowResource('boards', boardId, board);
           }
         });
       },

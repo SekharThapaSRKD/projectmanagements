@@ -22,7 +22,7 @@ export const useLanguageStore = create<LanguageState>()(
   )
 );
 
-export const translations: Record<Locale, any> = {
+export const translations: Partial<Record<Locale, any>> = {
   en: {
     common: {
       dashboard: 'Dashboard',

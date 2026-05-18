@@ -213,7 +213,7 @@ function FilterConditionRow({
         onChange={(e) => onChange({ ...condition, operator: e.target.value as FilterOperator })}
         className="px-2 py-1 text-sm bg-[hsl(var(--bg))] border border-[hsl(var(--border))] rounded text-[hsl(var(--text))]"
       >
-        {(OPERATORS[field?.value] || OPERATORS.default).map(op => (
+        {((field && OPERATORS[field.value]) || OPERATORS.default).map(op => (
           <option key={op.value} value={op.value}>{op.label}</option>
         ))}
       </select>
@@ -416,7 +416,7 @@ export function FilterSearchInput({
   debounceMs?: number;
 }) {
   const [query, setQuery] = useState('');
-  const timeoutRef = React.useRef<NodeJS.Timeout>();
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const handleSearch = useCallback((value: string) => {
     setQuery(value);

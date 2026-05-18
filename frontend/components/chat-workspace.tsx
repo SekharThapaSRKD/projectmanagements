@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Hash, Users, MessageSquare, Plus, Search, SendHorizontal, Paperclip, Mic, File, Play, Pause, MoreVertical, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { useAuthStore } from '@/lib/auth-store';
+import { isTeamFlowApiConfigured, uploadFile } from '@/lib/teamflow-api';
 import { cn } from '@/lib/utils';
 
 export function ChatWorkspace() {
@@ -61,8 +62,28 @@ export function ChatWorkspace() {
 
   const handleSend = () => {
     if (!composerText.trim() && attachments.length === 0) return;
-    const attachMeta = attachments.map(file => ({ id: `att_${Math.random().toString(36).slice(2)}`, name: file.name, url: URL.createObjectURL(file), size: file.size, type: file.type }));
-    sendMessage(composerText.trim() || `📎 Shared ${attachments.length} file(s)`, currentChannel?.id, currentUser?.memberId, undefined, undefined, attachMeta);
+    (async () => {
+      let attachMeta: Array<{ id: string; name: string; url: string; size: number; type: string }> = [];
+      if (attachments.length > 0) {
+        if (isTeamFlowApiConfigured()) {
+          const uploaded = [] as any[];
+          for (const file of attachments) {
+            try {
+              const res = await uploadFile(file);
+              uploaded.push({ id: `att_${Math.random().toString(36).slice(2)}`, name: res.filename || file.name, url: res.url, size: res.size ?? file.size, type: res.mimeType ?? file.type });
+            } catch (err) {
+              // fallback to object URL if upload fails
+              uploaded.push({ id: `att_${Math.random().toString(36).slice(2)}`, name: file.name, url: URL.createObjectURL(file), size: file.size, type: file.type });
+            }
+          }
+          attachMeta = uploaded;
+        } else {
+          attachMeta = attachments.map(file => ({ id: `att_${Math.random().toString(36).slice(2)}`, name: file.name, url: URL.createObjectURL(file), size: file.size, type: file.type }));
+        }
+      }
+
+      sendMessage(composerText.trim() || `📎 Shared ${attachments.length} file(s)`, currentChannel?.id, currentUser?.memberId, undefined, undefined, attachMeta);
+    })();
     setComposerText('');
     setAttachments([]);
   };

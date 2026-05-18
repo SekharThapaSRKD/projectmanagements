@@ -163,17 +163,8 @@ export function PricingView() {
         if (data.checkoutUrl) {
           // Backend provided direct checkout URL
           window.location.href = data.checkoutUrl;
-        } else if (data.sessionId) {
-          // Use Stripe.js to redirect to checkout
-          const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
-          if (stripe) {
-            const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
-            if (result.error) {
-              console.error('Stripe redirect error:', result.error.message);
-              alert('Failed to redirect to checkout: ' + result.error.message);
-              setConfirmPlan(null);
-            }
-          }
+        } else {
+          throw new Error('Invalid checkout response from server');
         }
       } else {
         alert('Upgrade failed: ' + (data.error || 'Unknown error'));

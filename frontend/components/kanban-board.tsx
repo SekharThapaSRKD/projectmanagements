@@ -455,7 +455,7 @@ export function KanbanBoard({ onTaskClick, filterSprintId = null, onCreateTask }
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <SortableContext items={columns.map(col => col.id)} strategy={horizontalListSortingStrategy}>
-            {columns.map(column => {
+            {columns.map((column, index) => {
               const columnTasks = boardTasks.filter(task => task.status === column.id);
               const shouldHide = hideEmptyColumns && columnTasks.length === 0;
               

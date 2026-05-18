@@ -114,6 +114,7 @@ export interface Task {
   storyPoints?: number;
   timeEstimate?: number; // in hours
   timeSpent?: number; // in hours
+  epic?: string;
   dueDate?: string;
   blockedBy?: string[]; // array of task IDs
   blockers?: string[]; // array of task IDs that this blocks

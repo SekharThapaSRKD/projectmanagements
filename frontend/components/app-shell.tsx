@@ -40,6 +40,7 @@ export function AppShell() {
   const [ready, setReady] = useState(false);
   const handledCheckoutRef = useRef<string | null>(null);
   const bootstrapStartedRef = useRef(false);
+  const welcomeToastShownRef = useRef(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
@@ -48,6 +49,8 @@ export function AppShell() {
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [welcomeUserName, setWelcomeUserName] = useState('TeamFlow user');
 
   const authUser = useAuthStore(state => state.user);
   const isAuthenticated = useAuthStore(state => state.isAuthenticated);
@@ -58,6 +61,7 @@ export function AppShell() {
   const logout = useAuthStore(state => state.logout);
   const refreshCurrentUser = useAuthStore(state => state.refreshCurrentUser);
   const setSubscriptionTier = useAuthStore(state => state.setSubscriptionTier);
+  const [isBootstrapped, setIsBootstrapped] = useState(false);
 
   useEffect(() => {
     setReady(true);
@@ -84,14 +88,24 @@ export function AppShell() {
 
     const bootstrap = async () => {
       if (shouldSkipBootstrap) {
-        return;
+        setIsBootstrapped(true);
+      } else {
+        await refreshCurrentUser();
+        await hydrateFromBackend();
+
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(bootstrapSessionKey, '1');
+        }
+        setIsBootstrapped(true);
       }
 
-      await refreshCurrentUser();
-      await hydrateFromBackend();
+      if (typeof window !== 'undefined' && !welcomeToastShownRef.current) {
+        welcomeToastShownRef.current = true;
 
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem(bootstrapSessionKey, '1');
+        const refreshedUser = useAuthStore.getState().user;
+        const userName = refreshedUser?.name ?? refreshedUser?.email ?? 'TeamFlow user';
+        setWelcomeUserName(userName);
+        setShowWelcomeModal(true);
       }
     };
 
@@ -101,7 +115,7 @@ export function AppShell() {
     return () => {
       stopRealtimeSync();
     };
-  }, [authMode, authUser?.id, hydrateFromBackend, isAuthenticated, ready, refreshCurrentUser, startRealtimeSync]);
+  }, [addToast, authMode, hydrateFromBackend, isAuthenticated, ready, refreshCurrentUser, startRealtimeSync]);
 
   useEffect(() => {
     if (!ready || !isAuthenticated || authMode !== 'real') {
@@ -143,7 +157,7 @@ export function AppShell() {
             title: 'Purchase Successful',
             description: `${checkoutPlan.toUpperCase()} is now active. Premium limits are unlocked.`
           });
-          router.replace(pathname, { scroll: false });
+          router.replace((pathname ?? '/') as any);
           return;
         }
 
@@ -157,7 +171,7 @@ export function AppShell() {
         title: 'Payment Confirmed',
         description: 'Your plan is being synchronized. Refreshing the account profile in the background.'
       });
-      router.replace(pathname, { scroll: false });
+      router.replace((pathname ?? '/') as any);
     };
 
     void activatePlan();
@@ -167,10 +181,18 @@ export function AppShell() {
     };
   }, [addNotification, addToast, authMode, hydrateFromBackend, isAuthenticated, pathname, ready, refreshCurrentUser, router, searchParams, setSubscriptionTier]);
 
-  if (!ready || !isAuthenticated || !authUser) {
+  if (!ready || !isAuthenticated || !authUser || !isBootstrapped) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-white">
-        Loading TeamFlow...
+      <div className="flex min-h-screen items-center justify-center px-6 text-white">
+        <div className="rounded-[28px] border border-white/10 bg-white/5 px-6 py-10 text-center shadow-2xl backdrop-blur-xl">
+          <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
+            <div className="h-9 w-9 animate-spin rounded-full border-4 border-[hsl(var(--accent))/0.25] border-t-[hsl(var(--accent))]" />
+          </div>
+          <h1 className="text-xl font-semibold text-white">Preparing your TeamFlow workspace</h1>
+          <p className="mt-2 max-w-xs text-sm text-[hsl(var(--muted))]">
+            Loading your projects, messages, and workspace settings so the app opens smoothly.
+          </p>
+        </div>
       </div>
     );
   }
@@ -351,8 +373,39 @@ export function AppShell() {
             )}
           </section>
         </main>
+
       </div>
 
+      {showWelcomeModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-2xl rounded-[32px] border border-white/15 bg-[#0b1220]/95 p-8 text-white shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+            <div className="mb-3 text-sm uppercase tracking-[0.35em] text-[hsl(var(--accent))]">Welcome back</div>
+            <h2 className="mb-4 text-3xl font-semibold leading-tight text-white">Hey {welcomeUserName}, your workspace is ready.</h2>
+            <p className="mb-6 max-w-2xl text-sm leading-7 text-[hsl(var(--muted))]">
+              Projects, boards, backlog items, and team chat are loaded. Explore the sidebar to jump into your active workspace, review work in progress, and collaborate with your team.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWelcomeModal(false);
+                  setActiveView('dashboard');
+                }}
+                className="rounded-2xl bg-[hsl(var(--accent))] px-5 py-3 text-sm font-semibold text-black transition hover:bg-[hsl(var(--accent)/0.9)]"
+              >
+                Go to dashboard
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowWelcomeModal(false)}
+                className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <ProjectDialog isOpen={isCreatingProject} onClose={closeProjectDialog} />
       <BoardDialog isOpen={isCreatingBoard} onClose={() => setIsCreatingBoard(false)} projectId={activeProjectId || ''} />
       <JoinProjectDialog isOpen={isJoiningProject} onClose={() => setIsJoiningProject(false)} />
