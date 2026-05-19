@@ -1,0 +1,1 @@
+1. sprint vertical option icon is not working properly. The popover / menu position  is below the other card , make the z index higher please.
