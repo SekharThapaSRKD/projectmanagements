@@ -221,17 +221,9 @@ function LoginContent() {
                   <h3 className="text-lg font-extrabold uppercase tracking-wide text-[hsl(var(--text))]">Logging in</h3>
 
                   <div className="mt-1 h-5">
-                    <AnimatePresence mode="wait">
-                      <motion.p
-                        key={progressMessage}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="text-sm text-[hsl(var(--muted))]"
-                      >
-                        {progressMessage}
-                      </motion.p>
-                    </AnimatePresence>
+                    <p className="text-sm text-[hsl(var(--muted))]">
+                      {progressMessage}
+                    </p>
                   </div>
 
                   <div className="mt-4 flex items-center gap-3">
