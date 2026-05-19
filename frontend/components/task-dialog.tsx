@@ -53,6 +53,7 @@ export function TaskDialog({ task, isNew, onClose }: TaskDialogProps) {
       description: description.trim(),
       status,
       priority,
+      type: task?.type ?? 'task',
       assigneeId: assigneeId || null,
       labels: previewLabels,
       devNotes: devNotes.trim(),

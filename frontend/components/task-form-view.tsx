@@ -1,8 +1,9 @@
 'use client';
 
-import { Code2, Plus, Trash2, X, ArrowLeft, Save, MessageSquare, Tag, AlignLeft, BarChart2, User, Layers, FileCode, CheckCircle2, Calendar } from 'lucide-react';
+import { Code2, Plus, Trash2, X, ArrowLeft, Save, MessageSquare, Tag, AlignLeft, BarChart2, User, Layers, FileCode, CheckCircle2, Calendar, Paperclip, Upload, Image as ImageIcon, FileText } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppStore } from '@/lib/store';
+import { isTeamFlowApiConfigured, uploadFile } from '@/lib/teamflow-api';
 import type { CodeSnippet, Task } from '@/lib/types';
 import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,6 +29,7 @@ export function TaskFormView({ task, onClose }: TaskFormViewProps) {
   const [snippet, setSnippet] = useState<CodeSnippet>(task?.codeSnippets?.[0] ?? initialSnippet());
   const [dueDate, setDueDate] = useState(task?.dueDate ?? '');
   const [comment, setComment] = useState('');
+  const [attachments, setAttachments] = useState(task?.attachments ?? []);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const activeProject = useAppStore(state => state.projects.find(p => p.id === (task?.projectId ?? activeProjectId)));
@@ -37,6 +39,60 @@ export function TaskFormView({ task, onClose }: TaskFormViewProps) {
   }, [members, activeProject]);
 
   const previewLabels = useMemo(() => labels.split(',').map(label => label.trim()).filter(Boolean), [labels]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach(async file => {
+      if (isTeamFlowApiConfigured()) {
+        try {
+          const res = await uploadFile(file);
+          const newAttachment = {
+            id: crypto.randomUUID(),
+            filename: res.filename || file.name,
+            url: res.url,
+            size: res.size ?? file.size,
+            type: res.mimeType ?? file.type,
+            uploadedAt: new Date().toISOString()
+          };
+          setAttachments(prev => [...prev, newAttachment]);
+        } catch (err) {
+          // fallback to local preview if upload fails
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const newAttachment = {
+              id: crypto.randomUUID(),
+              filename: file.name,
+              url: reader.result as string,
+              size: file.size,
+              type: file.type,
+              uploadedAt: new Date().toISOString()
+            };
+            setAttachments(prev => [...prev, newAttachment]);
+          };
+          reader.readAsDataURL(file);
+        }
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const newAttachment = {
+            id: crypto.randomUUID(),
+            filename: file.name,
+            url: reader.result as string,
+            size: file.size,
+            type: file.type,
+            uploadedAt: new Date().toISOString()
+          };
+          setAttachments(prev => [...prev, newAttachment]);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
+  };
 
   const saveTask = () => {
     if (!title.trim()) {
@@ -48,10 +104,12 @@ export function TaskFormView({ task, onClose }: TaskFormViewProps) {
       description: description.trim(),
       status,
       priority,
+      type: task?.type ?? 'task',
       assigneeId: assigneeId || null,
       labels: previewLabels,
       devNotes: devNotes.trim(),
       codeSnippets: snippet.code.trim() || snippet.filename.trim() ? [snippet] : [],
+      attachments,
       projectId: task?.projectId ?? activeProjectId,
       sprintId: task?.sprintId ?? activeSprintId,
       dueDate: dueDate || undefined
@@ -162,6 +220,59 @@ export function TaskFormView({ task, onClose }: TaskFormViewProps) {
                 placeholder="Technical constraints, architectural patterns, or logic flow..."
                 className="w-full resize-none rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-soft))] px-6 py-5 text-xs font-mono text-[hsl(var(--text))] outline-none focus:border-[hsl(var(--accent)/0.5)] transition-all" 
               />
+            </div>
+
+            {/* Attachments Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[hsl(var(--muted))]">
+                  <Paperclip className="h-4 w-4" /> Attachments & Screenshots
+                </div>
+                <label className="flex cursor-pointer items-center gap-2 rounded-xl bg-[hsl(var(--accent)/0.1)] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--accent))] transition hover:bg-[hsl(var(--accent)/0.2)]">
+                  <Upload className="h-3.5 w-3.5" />
+                  Upload Files
+                  <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*,application/pdf" />
+                </label>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                {attachments.map(file => (
+                  <div key={file.id} className="group relative overflow-hidden rounded-2xl border border-[hsl(var(--border-soft))] bg-[hsl(var(--bg-soft))] p-2 transition hover:border-[hsl(var(--accent)/0.3)]">
+                    {file.type.startsWith('image/') ? (
+                      <div className="aspect-video w-full overflow-hidden rounded-xl bg-black/20">
+                        <img src={file.url} alt={file.filename} className="h-full w-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="flex aspect-video w-full flex-col items-center justify-center rounded-xl bg-black/20 text-[hsl(var(--muted))]">
+                        <FileText className="h-8 w-8" />
+                        <span className="mt-2 text-[10px] uppercase font-bold tracking-widest">{file.type.split('/')[1]}</span>
+                      </div>
+                    )}
+                    <div className="mt-2 flex items-center justify-between px-1">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[10px] font-bold text-white">{file.filename}</p>
+                        <p className="text-[9px] text-[hsl(var(--muted))]">{(file.size / 1024).toFixed(1)} KB</p>
+                      </div>
+                      <button 
+                        onClick={() => removeAttachment(file.id)}
+                        className="rounded-lg p-1 text-[hsl(var(--muted))] opacity-0 transition hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {attachments.length === 0 && (
+                  <div className="col-span-full rounded-2xl border border-dashed border-[hsl(var(--border-soft))] p-8 text-center">
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 text-white/20">
+                      <ImageIcon className="h-6 w-6" />
+                    </div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--muted))]">
+                      No visual assets attached
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Code Snippet Section */}
