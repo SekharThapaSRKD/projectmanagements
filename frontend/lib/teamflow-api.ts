@@ -20,7 +20,7 @@ const requestJson = async <T>(path: string, init: RequestInit = {}): Promise<T> 
     response = await fetch(`${baseUrl}${path}`, {
       ...init,
       headers: {
-        'Content-Type': 'application/json',
+        ...(init.body ? { 'Content-Type': 'application/json' } : {}),
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...(init.headers ?? {})
       },
