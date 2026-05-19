@@ -256,7 +256,11 @@ function SprintSection({
   return (
     <motion.div 
       layout
-      className={cn('rounded-xl border overflow-hidden transition-all', sprintStatusColor[sprint.status])}
+      className={cn(
+        'rounded-xl border transition-all', 
+        sprintStatusColor[sprint.status],
+        optionOpen ? 'overflow-visible z-40 relative' : 'overflow-hidden relative z-10'
+      )}
     >
       {/* Sprint Header */}
       <div className="flex items-center justify-between px-4 py-3.5 hover:bg-[hsl(var(--bg-soft))] transition-colors group">
