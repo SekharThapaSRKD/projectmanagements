@@ -259,7 +259,7 @@ function SprintSection({
       className={cn(
         'rounded-xl border transition-all', 
         sprintStatusColor[sprint.status],
-        optionOpen ? 'overflow-visible z-40 relative' : 'overflow-hidden relative z-10'
+        optionOpen ? 'overflow-visible z-50 relative' : 'overflow-hidden relative z-10'
       )}
     >
       {/* Sprint Header */}
@@ -363,7 +363,7 @@ function SprintSection({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="absolute right-0 top-full z-30 mt-2 w-48 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-elevated))] shadow-xl overflow-hidden"
+              className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-elevated))] shadow-xl overflow-hidden"
             >
               <button
                 onClick={() => { setOptionOpen(false); onSprintAction?.('configure'); }}
